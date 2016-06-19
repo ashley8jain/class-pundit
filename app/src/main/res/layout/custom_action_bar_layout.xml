@@ -13,8 +13,7 @@
             android:layout_gravity="center_vertical"
             android:background="@android:color/transparent"
             android:id="@+id/action_bar_back"
-            android:layout_alignParentTop="true"
-            android:layout_centerHorizontal="true" />
+            android:layout_alignParentTop="true" />
 
 
         <EditText
@@ -36,6 +35,15 @@
             android:layout_centerHorizontal="true" />
 
 
+    </TableRow>
+    <TableRow>
+        <EditText
+            android:layout_width="match_parent"
+            android:id= "@+id/search_bar2"
+            android:layout_height= "wrap_content"
+            android:hint= "Go Places!"
+            android:layout_alignParentTop="true"
+            android:layout_weight= "1" />
     </TableRow>
 
 </TableLayout>

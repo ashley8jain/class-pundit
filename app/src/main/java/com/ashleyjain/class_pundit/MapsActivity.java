@@ -1,18 +1,16 @@
 package com.ashleyjain.class_pundit;
 
-import android.Manifest;
 import android.content.Context;
-import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.location.Address;
 import android.location.Geocoder;
 import android.os.Bundle;
-import android.support.v4.app.ActivityCompat;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.View;
 import android.view.inputmethod.InputMethodManager;
+import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.Toast;
@@ -47,20 +45,23 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     Context context;
     Circle shape;
     Marker marker;
+    double radius;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_maps);
-        // Obtain the SupportMapFragment and get notified when the map is ready to be used.
-        JSON();
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.map);
         mapFragment.getMapAsync(this);
         context = this;
         getSupportActionBar().setDisplayOptions(ActionBar.DISPLAY_SHOW_CUSTOM);
         getSupportActionBar().setDisplayShowCustomEnabled(true);
         getSupportActionBar().setCustomView(R.layout.custom_action_bar_layout);
+        JSON();
+
+        // Obtain the SupportMapFragment and get notified when the map is ready to be used.
         View view = getSupportActionBar().getCustomView();
+
         final EditText editText = (EditText) view.findViewById(R.id.search_bar);
         ImageButton search = (ImageButton) view.findViewById(R.id.search);
         search.setOnClickListener(new View.OnClickListener() {
@@ -74,26 +75,24 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
 
                     List<Address> list = gc.getFromLocationName(location, 1);
                     if(!list.isEmpty()){
-                        Address add = list.get(0);
 
+                        removeShape();
+                        removeMarker();
+
+                        Address add = list.get(0);
+                        p("listt: "+list.toString());
                         double lat = add.getLatitude();
                         double lng = add.getLongitude();
                         LatLng latlng = new LatLng(lat, lng);
-                        mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(latlng, 12.0f));
-                        if(shape!=null){
-                            shape.remove();
-                            shape = null;
-                        }
-                        if(marker!=null){
-                            marker.remove();
-                            marker = null;
-                        }
+
                         marker = mMap.addMarker(new MarkerOptions().position(latlng).title(add.getLocality()).snippet(add.getCountryName()).icon(BitmapDescriptorFactory.fromResource(R.drawable.homem)).draggable(true));
-                        CircleOptions options = new CircleOptions().center(new LatLng(lat,lng)).radius(1000).fillColor(0x330000FF).strokeColor(Color.RED).strokeWidth(3);
+                        CircleOptions options = new CircleOptions().center(new LatLng(lat,lng)).radius(radius).fillColor(0x330000FF).strokeColor(Color.RED).strokeWidth(3);
                         shape = mMap.addCircle(options);
+                        mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(latlng, 12.0f));
+
                     }
                     else{
-                        Toast.makeText(context,"Location not found!!",Toast.LENGTH_LONG).show();
+                        t("Location not found!!");
                     }
 
                 } catch (IOException e) {
@@ -101,29 +100,51 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                 }
             }
         });
+
+        final Button inc = (Button) findViewById(R.id.inc);
+        inc.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if(shape!=null)
+                    shape.setRadius(radius=radius+500);
+            }
+        });
+        Button dec = (Button) findViewById(R.id.dec);
+        dec.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if(shape!=null)
+                    shape.setRadius(radius=radius-500);
+            }
+        });
     }
 
 
     @Override
     public void onMapReady(GoogleMap googleMap) {
+
         mMap = googleMap;
         mMap.getUiSettings().setZoomGesturesEnabled(true);
         mMap.getUiSettings().setZoomControlsEnabled(true);
         mMap.getUiSettings().setRotateGesturesEnabled(false);
         mMap.getUiSettings().setCompassEnabled(true);
-        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-            // TODO: Consider calling
-            //    ActivityCompat#requestPermissions
-            // here to request the missing permissions, and then overriding
-            //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
-            //                                          int[] grantResults)
-            // to handle the case where the user grants the permission. See the documentation
-            // for ActivityCompat#requestPermissions for more details.
-            return;
-        }
-        mMap.setMyLocationEnabled(true);
+//        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+//            // TODO: Consider calling
+//            //    ActivityCompat#requestPermissions
+//            // here to request the missing permissions, and then overriding
+//            //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
+//            //                                          int[] grantResults)
+//            // to handle the case where the user grants the permission. See the documentation
+//            // for ActivityCompat#requestPermissions for more details.
+//            return;
+//        }
+//        mMap.setMyLocationEnabled(true);
+        radius = 5000;
         LatLng sydney = new LatLng(37.610029, -122.079577);
         marker = mMap.addMarker(new MarkerOptions().position(sydney).title("Marker in Sydney").icon(BitmapDescriptorFactory.fromResource(R.drawable.homem)).draggable(true));
+        CircleOptions options = new CircleOptions().center(sydney).radius(radius).fillColor(0x330000FF).strokeColor(Color.RED).strokeWidth(3);
+        shape = mMap.addCircle(options);
+
         mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(sydney,12.0f));
         mMap.setOnMarkerDragListener(new GoogleMap.OnMarkerDragListener() {
             @Override
@@ -132,21 +153,15 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
 
             @Override
             public void onMarkerDrag(Marker marker) {
-                if(shape!=null){
-                    shape.remove();
-                    shape = null;
-                }
+                removeShape();
                 LatLng ll = marker.getPosition();
-                CircleOptions options = new CircleOptions().center(new LatLng(ll.latitude,ll.longitude)).radius(1000).fillColor(0x330000FF).strokeColor(Color.RED).strokeWidth(3);
+                CircleOptions options = new CircleOptions().center(new LatLng(ll.latitude,ll.longitude)).radius(radius).fillColor(0x330000FF).strokeColor(Color.RED).strokeWidth(3);
                 shape = mMap.addCircle(options);
             }
 
             @Override
             public void onMarkerDragEnd(Marker marker) {
-                if(shape!=null){
-                    shape.remove();
-                    shape = null;
-                }
+                removeShape();
                 Geocoder gc = new Geocoder(context);
                 LatLng ll = marker.getPosition();
                 List<Address> list = null;
@@ -160,11 +175,35 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                 marker.setTitle(add.getLocality());
                 marker.setSnippet(add.getCountryName());
                 marker.showInfoWindow();
-                CircleOptions options = new CircleOptions().center(new LatLng(ll.latitude,ll.longitude)).radius(1000).fillColor(0x330000FF).strokeColor(Color.RED).strokeWidth(3);
+                CircleOptions options = new CircleOptions().center(new LatLng(ll.latitude,ll.longitude)).radius(radius).fillColor(0x330000FF).strokeColor(Color.RED).strokeWidth(3);
                 shape = mMap.addCircle(options);
 
             }
         });
+
+    }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    void removeShape(){
+        if(shape!=null){
+            shape.remove();
+            shape = null;
+        }
+    }
+
+    void removeMarker(){
 
     }
 
@@ -179,7 +218,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     void JSON(){
 
         RequestQueue queue = Volley.newRequestQueue(this); // this = context
-        final String url = "http://192.168.0.111/cpnew/allp.json";
+        final String url = "https://www.dropbox.com/s/7fg87yyp33cib4c/JSONallp.txt?dl=0";
         JsonObjectRequest getRequest = new JsonObjectRequest(Request.Method.GET, url,
                 new Response.Listener<JSONObject>()
                 {
@@ -211,5 +250,12 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                 }
         );
         queue.add(getRequest);
+    }
+
+    void p(String print){
+        System.out.println(print);
+    }
+    void t(String toast){
+        Toast.makeText(MapsActivity.this, toast, Toast.LENGTH_SHORT).show();
     }
 }
