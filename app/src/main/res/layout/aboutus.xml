@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical" android:layout_width="match_parent"
+    android:layout_height="match_parent">
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:textStyle="bold"
+        android:padding="10dp"
+        android:textSize="15sp"
+        android:text="Our Mission"/>
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:padding="10dp"
+        android:text="Help every child discover their full potential by introducing them to the wonderful world of extra-curricular learning."/>
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:textStyle="bold"
+        android:padding="10dp"
+        android:textSize="15sp"
+        android:text="About ClassPundit"/>
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:padding="10dp"
+        android:text="ClassPundit helps you find classes in your neighborhood. For kids, adults and even pets.
+You can use ClassPundit to: \n
+  ☞  Search for a basketball, piano or a hip-hop class in your neighborhood \n
+  ☞  Discover new classes like horse-riding and chess \n
+  ☞  Chat with your friends to learn more about a particular class \n
+Explore a world of fun. Inspire your kids to break out of their limited routine of homework and video games."
+    />
+    <ImageView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:padding="10dp"
+        android:src="@drawable/logo_cp1"/>
+</LinearLayout>
