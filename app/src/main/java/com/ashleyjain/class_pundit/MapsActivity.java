@@ -11,6 +11,7 @@ import android.location.Address;
 import android.location.Geocoder;
 import android.os.Bundle;
 import android.support.v4.app.ActivityCompat;
+import android.support.v4.app.FragmentManager;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
@@ -44,13 +45,12 @@ import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.BitmapDescriptorFactory;
+import com.google.android.gms.maps.model.CameraPosition;
 import com.google.android.gms.maps.model.Circle;
 import com.google.android.gms.maps.model.CircleOptions;
 import com.google.android.gms.maps.model.LatLng;
-import com.google.android.gms.maps.model.LatLngBounds;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
-import com.google.maps.android.SphericalUtil;
 import com.like.LikeButton;
 import com.like.OnLikeListener;
 import com.mikepenz.materialdrawer.Drawer;
@@ -86,12 +86,13 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     int PLACE_AUTOCOMPLETE_REQUEST_CODE = 1;
     int num_near = 0;
     HashMap hm = new HashMap();
+    HashMap hm2;
+    List<providerdetail> plist;
+    private float currentZoom = -1;
 
     //drawer
     public static Drawer drawer = null;
     DrawerBuilder builder=null;
-
-    public static final String PREFS_NAME = "MyPrefsFile";
 
 
     @Override
@@ -119,6 +120,9 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                 return true;
 
             case R.id.filter:
+                FragmentManager fm = getSupportFragmentManager();
+                filterdialog overlay = new filterdialog();
+                overlay.show(fm, "FragmentDialog");
                 return  true;
 
             default:
@@ -184,7 +188,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                     ArrayList<providerdetail> favouriteList;
                     Set entrySet = hm.entrySet();
                     Iterator iterator = entrySet.iterator();
-                    favouriteList = new ArrayList<providerdetail>();
+                    favouriteList = new ArrayList<>();
 
                     while(iterator.hasNext()){
                         Map.Entry mapping = (Map.Entry)iterator.next();
@@ -262,6 +266,8 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
             }
         });
 
+
+
     }
 
     @Override
@@ -298,6 +304,19 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                 removeShape();
                 mMap.clear();
                 reDisplay();
+            }
+        });
+
+        mMap.setOnCameraChangeListener(new GoogleMap.OnCameraChangeListener() {
+
+            @Override
+            public void onCameraChange(CameraPosition position) {
+                if (position.zoom != currentZoom){
+                    currentZoom = position.zoom;
+                    removeShape();
+                    mMap.clear();
+                    reDisplay();
+                }
             }
         });
 
@@ -372,11 +391,11 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     }
 
     void JSON(){
+        p("JSON");
         num_near = 0;
-        final LatLngBounds latLngBounds = toBounds(shape.getCenter(),shape.getRadius());
-        //final String url = "http://192.168.0.111/cpnew/allp.json";
-        final String url = "http://192.168.1.102/JSONallp.txt";
-
+        //final String url = "http://192.168.8.100/cpnew/allp.json";
+        final String url = "http://192.168.8.105/JSONallp.txt";
+        plist = new ArrayList<>();
         JsonObjectRequest getRequest = new JsonObjectRequest(Request.Method.GET, url,
                 new Response.Listener<JSONObject>()
                 {
@@ -393,23 +412,30 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                                     JSONObject js = (JSONObject) response.get(key);
                                     LatLng tmp = new LatLng(js.getDouble("lat"),js.getDouble("lng"));
                                     double distance_home = latlandist(tmp,shape.getCenter());
+
                                     if(distance_home<=shape.getRadius()){
                                         num_near++;
-                                        Marker tmpmarker = mMap.addMarker(new MarkerOptions().position(tmp).title(js.getString("name_provider")).snippet(js.getString("address")).icon(BitmapDescriptorFactory.fromResource(R.drawable.marker1)));
+                                        //Marker tmpmarker = mMap.addMarker(new MarkerOptions().position(tmp).title(js.getString("name_provider")).snippet(js.getString("address")).icon(BitmapDescriptorFactory.fromResource(resID)));
                                         providerdetail ptmp = new providerdetail(js.getDouble("lat"),js.getDouble("lng"),js.getString("mycat"),js.getString("name_provider"),js.getString("phone"),js.getString("email"),js.getString("address"),js.getString("website"),js.getString("countrycode"),js.getString("username"));
+                                        plist.add(ptmp);
                                         if(!hm.containsKey(tmp)){
-                                            p("null");
+                                            p("does_not_contain");
                                             hm.put(tmp,ptmp);
                                         }
                                         else{
                                             p("contains");
                                         }
                                     }
+
+//                                    var groups = geolocgroup1(togroup, gmap.zoom, markers_density);
+//                                    drawgroups(groups);
                                 }
                             } catch (JSONException e) {
                                 e.printStackTrace();
                             }
                         }
+                        List<customArray> groups = geolocgroup1(plist,currentZoom);
+                        drawgroups(groups);
                         msgformatching(num_near);
                     }
                 },
@@ -426,23 +452,40 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
             @Override
             public boolean onMarkerClick(Marker marker) {
                 if(!marker.isDraggable()){
-                    final providerdetail pd = (providerdetail) hm.get(marker.getPosition());
-                    title.setText(marker.getTitle());
-                    address.setText(marker.getSnippet());
-                    classes.setText("Classes offered: "+pd.getMycat());
-                    phone2.setText("Phone: "+pd.getPhone());
-                    mail.setText("Mail: "+pd.getEmail());
-                    favourite_button.setLiked(pd.isLiked());
+                    final List<providerdetail> pd = (List<providerdetail>) hm2.get(marker.getPosition());
+                    title.setText(pd.get(0).getName_provider());
+                    address.setText(pd.get(0).getAddress());
+                    classes.setText("Classes offered: "+pd.get(0).getMycat());
+                    phone2.setText("Phone: "+pd.get(0).getPhone());
+                    mail.setText("Mail: "+pd.get(0).getEmail());
+                    favourite_button.setLiked(pd.get(0).isLiked());
                     favourite_button.setOnLikeListener(new OnLikeListener() {
                         @Override
                         public void liked(LikeButton likeButton) {
-                            pd.setLiked(true);
+                            pd.get(0).setLiked(true);
                         }
                         @Override
                         public void unLiked(LikeButton likeButton) {
-                            pd.setLiked(false);
+                            pd.get(0).setLiked(false);
                         }
                     });
+//                    final providerdetail pd = (providerdetail) hm.get(marker.getPosition());
+//                    title.setText(marker.getTitle());
+//                    address.setText(marker.getSnippet());
+//                    classes.setText("Classes offered: "+pd.getMycat());
+//                    phone2.setText("Phone: "+pd.getPhone());
+//                    mail.setText("Mail: "+pd.getEmail());
+//                    favourite_button.setLiked(pd.isLiked());
+//                    favourite_button.setOnLikeListener(new OnLikeListener() {
+//                        @Override
+//                        public void liked(LikeButton likeButton) {
+//                            pd.setLiked(true);
+//                        }
+//                        @Override
+//                        public void unLiked(LikeButton likeButton) {
+//                            pd.setLiked(false);
+//                        }
+//                    });
                     expandableLayout.expand();
                 }
                 else{
@@ -453,10 +496,179 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         });
     }
 
-    public LatLngBounds toBounds(LatLng center, double radius) {
-        LatLng southwest = SphericalUtil.computeOffset(center, radius * Math.sqrt(2.0), 225);
-        LatLng northeast = SphericalUtil.computeOffset(center, radius * Math.sqrt(2.0), 45);
-        return new LatLngBounds(southwest, northeast);
+    double marker_density = 0.00600;
+    long scale = 1183315100;
+
+    List<List<providerdetail>> cluster_points(List prolist,float zoom){
+        List<List<providerdetail>> clusters = new ArrayList<>();
+        int size = 0;
+        while(prolist.size()>0){
+            List<providerdetail> cluster = new ArrayList<>();
+            for(int i=0;i<prolist.size();i++){
+                LatLng l1=new LatLng(((providerdetail)prolist.get(0)).getLat(),((providerdetail)prolist.get(0)).getLng());
+                LatLng l2 = new LatLng(((providerdetail)prolist.get(i)).getLat(),((providerdetail)prolist.get(i)).getLng());
+                double distance = latlandist(l1,l2);
+                p(distance*Math.pow(2,zoom)+"<="+ marker_density * scale);
+                if(distance*Math.pow(2,zoom) <= marker_density * scale){
+                    cluster.add((providerdetail) prolist.get(i));
+                    prolist.remove(i);
+                }
+            }
+            p("cluster size: "+cluster.size());
+            clusters.add(cluster);
+            size+=cluster.size();
+        }
+        p("totalsize: "+size);
+        return clusters;
+    }
+
+    List<customArray> geolocgroup1(List<providerdetail> plist,float zoom){
+        List<List<providerdetail>> groupslist = cluster_points(plist,zoom);
+        List<customArray> newgroupslist = new ArrayList<>();
+
+        for(int i=0;i<groupslist.size();i++){
+            List<providerdetail> group = groupslist.get(i);
+            int length = group.size();
+            double mid_lat = 0;
+            double mid_lon = 0;
+            for(int j=0;j<length;j++){
+                mid_lat+=group.get(j).getLat();
+                mid_lon+=group.get(j).getLng();
+            }
+            if(group.size()>0)
+            newgroupslist.add(new customArray(mid_lat/length,mid_lon/length,group.get(0),group));
+        }
+        return newgroupslist;
+    }
+
+    void drawgroups(List<customArray> groups){
+        //Marker tmpmarker = mMap.addMarker(new MarkerOptions().position(tmp).title(js.getString("name_provider")).snippet(js.getString("address")).icon(BitmapDescriptorFactory.fromResource(R.drawable.marker1)));
+        hm2 = new HashMap();
+        for(int i=0;i<groups.size();i++){
+            customArray group = groups.get(i);
+            LatLng tmp = new LatLng(group.getLat(),group.getLog());
+            p("size: "+group.getListp().size());
+            String markiconame = markericon_name(group.getListp().size());
+            int resID = getResources().getIdentifier(markiconame , "drawable", getPackageName());
+            hm2.put(tmp,group.getListp());
+            Marker tmpmarker = mMap.addMarker(new MarkerOptions().position(tmp).icon(BitmapDescriptorFactory.fromResource(resID)));
+        }
+    }
+
+    //    function cluster_points(plist, f) { //f (p0, p1) -> is p0 friend of p1
+//        var clusters = [];
+//        var limit = 100;
+//        while(plist.length > 0) {
+//            limit--;
+//            cluster = filter(function(x) {
+//                return f(x,plist[0]);
+//            }, plist);
+//            plist = listaminusb(plist, cluster);
+//            clusters.push(cluster);
+//        }
+//        return clusters;
+//
+//    }
+//    function geolocgroup(plist, zoom, screen_distance) {
+//        var scale = 1183315100;//scale on google map when zoom = 0
+//        return cluster_points(plist, function(x,y) {
+//            var distance = latlandist(x[0], x[1], y[0], y[1]);//meter
+//            return (distance*Math.pow(2, zoom) <= screen_distance*scale);
+//        });
+//    }
+
+//    function geolocgroup1(plist, zoom, screen_distance) {
+//        var groupslist = geolocgroup(plist, zoom, screen_distance);// Assert( Every cluster has alteast 1 point in it)
+//        return map(function(x) {
+//            var cluster_llsum = fold(function(y,z) {
+//                return [y[0]+z[0], y[1]+z[1]];
+//            } ,x, [0,0]);
+//            var lenc = x.length;//number of point in that cluster
+//            return [cluster_llsum[0]/lenc, cluster_llsum[1]/lenc, x[0][2], map(function(y){
+//                return y[2];
+//            }, x)];
+//        } ,groupslist);
+//
+//    }
+
+//    var markers_density = 0.00600;
+
+//    function drawgroups(groups) {
+//        var myl = [];
+//        mapp(function(x) {
+//            if(haskey(x, "locmark")) {
+//                x.locmark.setVisible(false);
+//            }
+//        }, providers);
+//        map(function(x) {// lat:x[0], lng:x[1], provider_id:x[2], list_of_providers:x[3]
+//            if(!haskey(providers[x[2]], "locmark")) {
+//                var prov_loc= new google.maps.Marker({
+//                        position: {lat: x[0], lng: x[1]},
+//                });
+//                google.maps.event.addListener(prov_loc, 'click', function() {
+//                    //$("#providerinfo").openModal();
+//                    bcard.openbcard(providers[x[2]].providers);
+//                });
+//                prov_loc.setMap(gmap);
+//                providers[x[2]].locmark = prov_loc;
+//            }
+//            var thismarker = providers[x[2]].locmark;
+//            providers[x[2]].providers = x[3];
+//
+//            thismarker.setIcon(markericon_name(x[3].length));
+//            //thismarker.setLabel('45');
+//            thismarker.setPosition({lat: x[0], lng: x[1]});
+//            thismarker.setVisible(true);
+//        }, groups);
+//    }
+
+
+
+
+
+
+    class customArray{
+        public double getLat() {
+            return lat;
+        }
+
+        public void setLat(double lat) {
+            this.lat = lat;
+        }
+
+        public double getLog() {
+            return log;
+        }
+
+        public void setLog(double log) {
+            this.log = log;
+        }
+
+        public providerdetail getA() {
+            return a;
+        }
+
+        public void setA(providerdetail a) {
+            this.a = a;
+        }
+
+        public List<providerdetail> getListp() {
+            return listp;
+        }
+
+        public void setListp(List<providerdetail> listp) {
+            this.listp = listp;
+        }
+
+        double lat,log;
+        providerdetail a;
+        List<providerdetail> listp;
+        public customArray(double lat,double log,providerdetail a,List<providerdetail> listp){
+            this.lat = lat;
+            this.log = log;
+            this.a = a;
+            this.listp = listp;
+        }
     }
 
     void reDisplay(){
@@ -502,7 +714,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                 }
             }
         }
-        return "photo/numicons/marker"+ind+".png";
+        return "marker"+ind;
     }
 
     @Override
