@@ -22,6 +22,7 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
+import android.widget.ImageButton;
 import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -75,14 +76,14 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     private GoogleMap mMap;
     private GoogleApiClient mGoogleApiClient;
     ExpandableRelativeLayout expandableLayout;
-    TextView title,address,classes,phone2,mail;
+    TextView title,address,classes,phone2,mail,outof;
+    ImageButton left,right;
     LikeButton favourite_button;
     Context context;
     Circle shape;
     Marker marker;
     double radius;
     ListView lv;
-    ArrayList<Marker> markersList;
     int PLACE_AUTOCOMPLETE_REQUEST_CODE = 1;
     int num_near = 0;
     HashMap hm = new HashMap();
@@ -94,6 +95,16 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     public static Drawer drawer = null;
     DrawerBuilder builder=null;
 
+    //final String url = "http://192.168.8.100/cpnew/allp.json";
+    final String url = "http://192.168.0.110/JSONallp.txt";
+
+    @Override
+    public void onBackPressed() {
+        if(expandableLayout.isExpanded())
+            expandableLayout.collapse();
+        else
+            super.onBackPressed();
+    }
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
@@ -186,16 +197,19 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                     View view2 = getLayoutInflater().inflate(R.layout.favouritelist, null);
                     lv = (ListView) view2.findViewById(android.R.id.list);
                     ArrayList<providerdetail> favouriteList;
-                    Set entrySet = hm.entrySet();
+                    Set entrySet = hm2.entrySet();
                     Iterator iterator = entrySet.iterator();
                     favouriteList = new ArrayList<>();
 
                     while(iterator.hasNext()){
                         Map.Entry mapping = (Map.Entry)iterator.next();
-                        providerdetail pd = (providerdetail) mapping.getValue();
-                        if(pd.isLiked()){
-                            favouriteList.add(pd);
+                        List<providerdetail> pd = (List<providerdetail>) mapping.getValue();
+                        for(int i=0;i<pd.size();i++){
+                            if(((providerdetail) hm.get(pd.get(i).getName_provider())).isLiked()){
+                                favouriteList.add(((providerdetail) hm.get(pd.get(i).getName_provider())));
+                            }
                         }
+
                     }
 
                     favouriteAdapter adapter = new favouriteAdapter(context, favouriteList);
@@ -233,15 +247,11 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         classes = (TextView) findViewById(R.id.classes);
         phone2 = (TextView) findViewById(R.id.phone);
         mail = (TextView) findViewById(R.id.email);
+        left = (ImageButton) findViewById(R.id.left_arrow);
+        right = (ImageButton) findViewById(R.id.right_arrow);
+        outof = (TextView) findViewById(R.id.outoftotal);
 
         favourite_button = (LikeButton) findViewById(R.id.favourite_button);
-
-//        expandableLayout.setOnClickListener(new View.OnClickListener() {
-//            @Override
-//            public void onClick(View v) {
-//                expandableLayout.collapse();
-//            }
-//        });
 
         final Button inc = (Button) findViewById(R.id.inc);
         inc.setOnClickListener(new View.OnClickListener() {
@@ -265,8 +275,6 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                 }
             }
         });
-
-
 
     }
 
@@ -317,6 +325,124 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                     mMap.clear();
                     reDisplay();
                 }
+            }
+        });
+
+        final List<providerdetail>[] pd = new ArrayList[]{null};
+        final int[] i = {0};
+        mMap.setOnMarkerClickListener(new GoogleMap.OnMarkerClickListener() {
+            @Override
+            public boolean onMarkerClick(Marker marker) {
+                if(!marker.isDraggable()){
+                    i[0] = 0;
+                    pd[0] = (List<providerdetail>) hm2.get(marker.getPosition());
+                    if(pd[0].size()==1){
+                        outof.setVisibility(View.INVISIBLE);
+                        left.setVisibility(View.INVISIBLE);
+                        right.setVisibility(View.INVISIBLE);
+                    }
+                    else{
+                        outof.setVisibility(View.VISIBLE);
+                        left.setVisibility(View.VISIBLE);
+                        right.setVisibility(View.VISIBLE);
+                    }
+                    title.setText(pd[0].get(i[0]).getName_provider());
+                    address.setText(pd[0].get(i[0]).getAddress());
+                    classes.setText("Classes offered: "+ pd[0].get(i[0]).getMycat());
+                    phone2.setText("Phone: "+ pd[0].get(i[0]).getPhone());
+                    mail.setText("Mail: "+ pd[0].get(i[0]).getEmail());
+                    outof.setText((i[0]+1)+" of "+pd[0].size());
+                    favourite_button.setLiked(((providerdetail)hm.get(pd[0].get(i[0]).getName_provider())).isLiked());
+                    favourite_button.setOnLikeListener(new OnLikeListener() {
+                        @Override
+                        public void liked(LikeButton likeButton) {
+                            ((providerdetail)hm.get(pd[0].get(i[0]).getName_provider())).setLiked(true);
+                        }
+                        @Override
+                        public void unLiked(LikeButton likeButton) {
+                            ((providerdetail)hm.get(pd[0].get(i[0]).getName_provider())).setLiked(false);
+                        }
+                    });
+
+//                    final providerdetail pd = (providerdetail) hm.get(marker.getPosition());
+//                    title.setText(marker.getTitle());
+//                    address.setText(marker.getSnippet());
+//                    classes.setText("Classes offered: "+pd.getMycat());
+//                    phone2.setText("Phone: "+pd.getPhone());
+//                    mail.setText("Mail: "+pd.getEmail());
+//                    favourite_button.setLiked(pd.isLiked());
+//                    favourite_button.setOnLikeListener(new OnLikeListener() {
+//                        @Override
+//                        public void liked(LikeButton likeButton) {
+//                            pd.setLiked(true);
+//                        }
+//                        @Override
+//                        public void unLiked(LikeButton likeButton) {
+//                            pd.setLiked(false);
+//                        }
+//                    });
+                    expandableLayout.expand();
+                }
+                else{
+                    marker.showInfoWindow();
+                }
+                return true;
+            }
+        });
+
+        left.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                i[0]--;
+                if(i[0]<0){
+                    i[0]=pd[0].size()-1;
+                }
+
+                title.setText(pd[0].get(i[0]).getName_provider());
+                address.setText(pd[0].get(i[0]).getAddress());
+                classes.setText("Classes offered: "+ pd[0].get(i[0]).getMycat());
+                phone2.setText("Phone: "+ pd[0].get(i[0]).getPhone());
+                mail.setText("Mail: "+ pd[0].get(i[0]).getEmail());
+                outof.setText((i[0]+1)+" of "+pd[0].size());
+                favourite_button.setLiked(((providerdetail)hm.get(pd[0].get(i[0]).getName_provider())).isLiked());
+                favourite_button.setOnLikeListener(new OnLikeListener() {
+                    @Override
+                    public void liked(LikeButton likeButton) {
+                        ((providerdetail)hm.get(pd[0].get(i[0]).getName_provider())).setLiked(true);
+                    }
+                    @Override
+                    public void unLiked(LikeButton likeButton) {
+                        ((providerdetail)hm.get(pd[0].get(i[0]).getName_provider())).setLiked(false);
+                    }
+                });
+            }
+        });
+        right.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                i[0]++;
+                if(i[0]== pd[0].size()){
+                    i[0]=0;
+                }
+
+                title.setText(pd[0].get(i[0]).getName_provider());
+                address.setText(pd[0].get(i[0]).getAddress());
+                classes.setText("Classes offered: "+ pd[0].get(i[0]).getMycat());
+                phone2.setText("Phone: "+ pd[0].get(i[0]).getPhone());
+                mail.setText("Mail: "+ pd[0].get(i[0]).getEmail());
+                outof.setText((i[0]+1)+" of "+pd[0].size());
+                favourite_button.setLiked(((providerdetail)hm.get(pd[0].get(i[0]).getName_provider())).isLiked());
+                favourite_button.setOnLikeListener(new OnLikeListener() {
+                    @Override
+                    public void liked(LikeButton likeButton) {
+                        ((providerdetail)hm.get(pd[0].get(i[0]).getName_provider())).setLiked(true);
+                    }
+                    @Override
+                    public void unLiked(LikeButton likeButton) {
+                        ((providerdetail)hm.get(pd[0].get(i[0]).getName_provider())).setLiked(false);
+                    }
+                });
+
             }
         });
 
@@ -391,17 +517,13 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     }
 
     void JSON(){
-        p("JSON");
         num_near = 0;
-        //final String url = "http://192.168.8.100/cpnew/allp.json";
-        final String url = "http://192.168.8.105/JSONallp.txt";
         plist = new ArrayList<>();
         JsonObjectRequest getRequest = new JsonObjectRequest(Request.Method.GET, url,
                 new Response.Listener<JSONObject>()
                 {
                     @Override
                     public void onResponse(JSONObject response) {
-                        // display response
                         Log.d("Response", response.toString());
                         Iterator<?> keys = response.keys();
 
@@ -418,23 +540,21 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                                         //Marker tmpmarker = mMap.addMarker(new MarkerOptions().position(tmp).title(js.getString("name_provider")).snippet(js.getString("address")).icon(BitmapDescriptorFactory.fromResource(resID)));
                                         providerdetail ptmp = new providerdetail(js.getDouble("lat"),js.getDouble("lng"),js.getString("mycat"),js.getString("name_provider"),js.getString("phone"),js.getString("email"),js.getString("address"),js.getString("website"),js.getString("countrycode"),js.getString("username"));
                                         plist.add(ptmp);
-                                        if(!hm.containsKey(tmp)){
+                                        if(!hm.containsKey(ptmp.getName_provider())){
                                             p("does_not_contain");
-                                            hm.put(tmp,ptmp);
+                                            hm.put(ptmp.getName_provider(),ptmp);
                                         }
                                         else{
                                             p("contains");
                                         }
                                     }
-
-//                                    var groups = geolocgroup1(togroup, gmap.zoom, markers_density);
-//                                    drawgroups(groups);
                                 }
                             } catch (JSONException e) {
                                 e.printStackTrace();
                             }
                         }
-                        List<customArray> groups = geolocgroup1(plist,currentZoom);
+                        List<providerdetail> tmpPlist = plist;
+                        List<customArray> groups = geolocgroup1(tmpPlist,currentZoom);
                         drawgroups(groups);
                         msgformatching(num_near);
                     }
@@ -448,52 +568,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                 }
         );
         Volley.newRequestQueue(this).add(getRequest);
-        mMap.setOnMarkerClickListener(new GoogleMap.OnMarkerClickListener() {
-            @Override
-            public boolean onMarkerClick(Marker marker) {
-                if(!marker.isDraggable()){
-                    final List<providerdetail> pd = (List<providerdetail>) hm2.get(marker.getPosition());
-                    title.setText(pd.get(0).getName_provider());
-                    address.setText(pd.get(0).getAddress());
-                    classes.setText("Classes offered: "+pd.get(0).getMycat());
-                    phone2.setText("Phone: "+pd.get(0).getPhone());
-                    mail.setText("Mail: "+pd.get(0).getEmail());
-                    favourite_button.setLiked(pd.get(0).isLiked());
-                    favourite_button.setOnLikeListener(new OnLikeListener() {
-                        @Override
-                        public void liked(LikeButton likeButton) {
-                            pd.get(0).setLiked(true);
-                        }
-                        @Override
-                        public void unLiked(LikeButton likeButton) {
-                            pd.get(0).setLiked(false);
-                        }
-                    });
-//                    final providerdetail pd = (providerdetail) hm.get(marker.getPosition());
-//                    title.setText(marker.getTitle());
-//                    address.setText(marker.getSnippet());
-//                    classes.setText("Classes offered: "+pd.getMycat());
-//                    phone2.setText("Phone: "+pd.getPhone());
-//                    mail.setText("Mail: "+pd.getEmail());
-//                    favourite_button.setLiked(pd.isLiked());
-//                    favourite_button.setOnLikeListener(new OnLikeListener() {
-//                        @Override
-//                        public void liked(LikeButton likeButton) {
-//                            pd.setLiked(true);
-//                        }
-//                        @Override
-//                        public void unLiked(LikeButton likeButton) {
-//                            pd.setLiked(false);
-//                        }
-//                    });
-                    expandableLayout.expand();
-                }
-                else{
-                    marker.showInfoWindow();
-                }
-                return true;
-            }
-        });
+
     }
 
     double marker_density = 0.00600;
@@ -542,7 +617,6 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     }
 
     void drawgroups(List<customArray> groups){
-        //Marker tmpmarker = mMap.addMarker(new MarkerOptions().position(tmp).title(js.getString("name_provider")).snippet(js.getString("address")).icon(BitmapDescriptorFactory.fromResource(R.drawable.marker1)));
         hm2 = new HashMap();
         for(int i=0;i<groups.size();i++){
             customArray group = groups.get(i);

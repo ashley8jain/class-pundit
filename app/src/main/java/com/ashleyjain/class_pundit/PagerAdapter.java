@@ -18,19 +18,19 @@ public class PagerAdapter extends FragmentPagerAdapter {
         if (position == 0)
         {
             // find first fragment...
-            filterfragment ft1 = new filterfragment();
+            kidsfragment ft1 = new kidsfragment();
             return ft1;
         }
         if (position == 1)
         {
             // find first fragment...
-            filterfragment ft2 = new filterfragment();
+            adultsfragment ft2 = new adultsfragment();
             return ft2;
         }
         else if (position == 2)
         {
             // find first fragment...
-            filterfragment ft3 = new filterfragment();
+            petsfragment ft3 = new petsfragment();
             return ft3;
         }
 

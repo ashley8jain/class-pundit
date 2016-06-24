@@ -7,13 +7,11 @@ import android.view.View;
 import android.view.ViewGroup;
 
 /**
- * Created by ashleyjain on 20/06/16.
+ * Created by ashleyjain on 24/06/16.
  */
-public class filterfragment extends Fragment {
-
-
+public class adultsfragment extends Fragment {
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-        return inflater.inflate(R.layout.fragment_filter, container, false);
+        return inflater.inflate(R.layout.adults_filter, container, false);
     }
 }

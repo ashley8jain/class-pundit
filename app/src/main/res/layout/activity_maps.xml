@@ -67,13 +67,50 @@
                     android:id="@+id/email" />
 
             </LinearLayout>
-            <com.like.LikeButton
-                app:icon_type="heart"
-                app:icon_size="20dp"
-                android:layout_weight="0.1"
-                android:id="@+id/favourite_button"
+
+
+            <LinearLayout
                 android:layout_width="wrap_content"
-                android:layout_height="wrap_content"/>
+                android:layout_height="wrap_content"
+                android:layout_weight="0.1"
+                android:orientation="vertical">
+                <com.like.LikeButton
+                    app:icon_type="heart"
+                    app:icon_size="20dp"
+                    android:layout_gravity="center_horizontal"
+                    android:id="@+id/favourite_button"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"/>
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center_horizontal"
+                    android:orientation="horizontal">
+                    <ImageButton
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:background="#ffffff"
+                        android:padding="5dp"
+                        android:layout_marginRight="2dp"
+                        android:src="@drawable/left"
+                        android:id="@+id/left_arrow" />
+                    <ImageButton
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:background="#ffffff"
+                        android:padding="5dp"
+                        android:src="@drawable/right"
+                        android:id="@+id/right_arrow" />
+                </LinearLayout>
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="as"
+                    android:padding="2dp"
+                    android:textColor="#000000"
+                    android:layout_gravity="center_horizontal"
+                    android:id="@+id/outoftotal"/>
+            </LinearLayout>
 
         </LinearLayout>
         </ScrollView>
@@ -95,27 +132,27 @@
     android:layout_height="match_parent"
     tools:context="com.ashleyjain.class_pundit.MapsActivity">
 
-    <LinearLayout
-        android:orientation="vertical"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_gravity="left|top"
-        >
-        <Button
-            android:layout_width="40dp"
-            android:layout_height="40dp"
-            android:background="#99ffffff"
-            android:id="@+id/inc"
-            android:text="O"/>
-        <Button
-            android:layout_width="40dp"
-            android:layout_height="40dp"
-            android:background="#99ffffff"
-            android:textAllCaps="false"
-            android:id="@+id/dec"
-            android:text="o"/>
-    </LinearLayout>
+        <LinearLayout
+            android:orientation="vertical"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="left|top"
+            >
+            <Button
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:background="#99ffffff"
+                android:id="@+id/inc"
+                android:text="O"/>
+            <Button
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:background="#99ffffff"
+                android:textAllCaps="false"
+                android:id="@+id/dec"
+                android:text="o"/>
+        </LinearLayout>
 
-</fragment>
+    </fragment>
 
 </LinearLayout>
