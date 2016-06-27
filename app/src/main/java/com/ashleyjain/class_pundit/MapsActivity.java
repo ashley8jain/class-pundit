@@ -64,10 +64,7 @@ import com.mikepenz.materialdrawer.model.interfaces.Nameable;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.ObjectOutputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -103,22 +100,6 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
 
     //final String url = "http://192.168.8.100/cpnew/allp.json";
     final String url = "http://192.168.0.102/JSONallp.txt";
-
-    @Override
-    protected void onStop() {
-        File file = new File(getDir("data", MODE_PRIVATE), "map");
-        ObjectOutputStream outputStream = null;
-        try {
-            outputStream = new ObjectOutputStream(new FileOutputStream(file));
-            outputStream.writeObject(hm);
-            outputStream.flush();
-            outputStream.close();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-
-        super.onStop();
-    }
 
     @Override
     public void onBackPressed() {
@@ -198,6 +179,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         builder.addDrawerItems(new PrimaryDrawerItem().withName("Favourite"))
                 .addDrawerItems(new PrimaryDrawerItem().withName("Contact us"))
                 .addDrawerItems(new PrimaryDrawerItem().withName("About us"))
+                .addDrawerItems(new PrimaryDrawerItem().withName("How It Works"))
         .withOnDrawerItemClickListener(new Drawer.OnDrawerItemClickListener() {
             @Override
             public boolean onItemClick(View view, int position, IDrawerItem drawerItem) {
@@ -206,26 +188,17 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                 AlertDialog.Builder alertBuilder = new AlertDialog.Builder(context);
                 if(name.equals("About us")){
                     dilogview = (LayoutInflater.from(context)).inflate(R.layout.aboutus, null);
-                    alertBuilder.setView(dilogview).setCancelable(true);
-                    Dialog dialog = alertBuilder.create();
-                    dialog.show();
                 }
                 else if(name.equals("Contact us")){
                     dilogview = (LayoutInflater.from(context)).inflate(R.layout.contactus, null);
-                    alertBuilder.setView(dilogview).setCancelable(true);
-                    Dialog dialog = alertBuilder.create();
-                    dialog.show();
                 }
                 else if(name.equals("Favourite")){
-                    View view2 = getLayoutInflater().inflate(R.layout.favouritelist, null);
-                    lv = (ListView) view2.findViewById(android.R.id.list);
+                    dilogview = getLayoutInflater().inflate(R.layout.favouritelist, null);
+                    lv = (ListView) dilogview.findViewById(android.R.id.list);
                     ArrayList<providerdetail> favouriteList;
-//                    Set entrySet = hm2.entrySet();
-//                    Iterator iterator = entrySet.iterator();
                     favouriteList = new ArrayList<>();
 
                     for(int i=0;i<overallPList.size();i++){
-
                         if(pref.getBoolean(overallPList.get(i).getId(),false)){
                             favouriteList.add(overallPList.get(i));
                         }
@@ -233,10 +206,13 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
 
                     favouriteAdapter adapter = new favouriteAdapter(context, favouriteList);
                     lv.setAdapter(adapter);
-                    alertBuilder.setView(view2).setCancelable(true);
-                    Dialog dialog = alertBuilder.create();
-                    dialog.show();
                 }
+                else if(name.equals("How It Works")){
+                    dilogview = (LayoutInflater.from(context)).inflate(R.layout.tutorial, null);
+                }
+                alertBuilder.setView(dilogview).setCancelable(true);
+                Dialog dialog = alertBuilder.create();
+                dialog.show();
 
                 return false;
             }

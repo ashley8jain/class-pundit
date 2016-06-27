@@ -27,6 +27,7 @@ public class favouriteAdapter extends BaseAdapter {
     public favouriteAdapter(Context context,ArrayList<MapsActivity.providerdetail> favouriteList){
         this.context = context;
         this.favouriteList = favouriteList;
+
     }
 
     @Override
