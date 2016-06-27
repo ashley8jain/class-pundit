@@ -1,10 +1,10 @@
 package com.ashleyjain.class_pundit;
 
 import android.Manifest;
-import android.app.AlertDialog;
 import android.app.Dialog;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.location.Address;
@@ -12,6 +12,7 @@ import android.location.Geocoder;
 import android.os.Bundle;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.FragmentManager;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
@@ -63,13 +64,14 @@ import com.mikepenz.materialdrawer.model.interfaces.Nameable;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.ObjectOutputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
-import java.util.Set;
 
 public class MapsActivity extends AppCompatActivity implements OnMapReadyCallback,GoogleApiClient.OnConnectionFailedListener {
 
@@ -90,13 +92,33 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     HashMap hm2;
     List<providerdetail> plist;
     private float currentZoom = -1;
+    public static SharedPreferences.Editor editor;
+    public static SharedPreferences pref;
+    List<providerdetail> overallPList;
+    int a = 0;
 
     //drawer
     public static Drawer drawer = null;
     DrawerBuilder builder=null;
 
     //final String url = "http://192.168.8.100/cpnew/allp.json";
-    final String url = "http://192.168.0.110/JSONallp.txt";
+    final String url = "http://192.168.0.102/JSONallp.txt";
+
+    @Override
+    protected void onStop() {
+        File file = new File(getDir("data", MODE_PRIVATE), "map");
+        ObjectOutputStream outputStream = null;
+        try {
+            outputStream = new ObjectOutputStream(new FileOutputStream(file));
+            outputStream.writeObject(hm);
+            outputStream.flush();
+            outputStream.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        super.onStop();
+    }
 
     @Override
     public void onBackPressed() {
@@ -147,6 +169,9 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_maps);
 
+        pref = getApplicationContext().getSharedPreferences("FavouriteList", 0); // 0 - for private mode
+        editor = pref.edit();
+
         Toolbar toolbar = (Toolbar) findViewById(R.id.my_toolbar);
 
         setSupportActionBar(toolbar);
@@ -181,46 +206,34 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                 AlertDialog.Builder alertBuilder = new AlertDialog.Builder(context);
                 if(name.equals("About us")){
                     dilogview = (LayoutInflater.from(context)).inflate(R.layout.aboutus, null);
-                    alertBuilder.setView(dilogview);
+                    alertBuilder.setView(dilogview).setCancelable(true);
                     Dialog dialog = alertBuilder.create();
                     dialog.show();
                 }
                 else if(name.equals("Contact us")){
                     dilogview = (LayoutInflater.from(context)).inflate(R.layout.contactus, null);
-                    alertBuilder.setView(dilogview);
+                    alertBuilder.setView(dilogview).setCancelable(true);
                     Dialog dialog = alertBuilder.create();
                     dialog.show();
                 }
                 else if(name.equals("Favourite")){
-                    //final Dialog dialog = new Dialog(context);
-
                     View view2 = getLayoutInflater().inflate(R.layout.favouritelist, null);
                     lv = (ListView) view2.findViewById(android.R.id.list);
                     ArrayList<providerdetail> favouriteList;
-                    Set entrySet = hm2.entrySet();
-                    Iterator iterator = entrySet.iterator();
+//                    Set entrySet = hm2.entrySet();
+//                    Iterator iterator = entrySet.iterator();
                     favouriteList = new ArrayList<>();
 
-                    while(iterator.hasNext()){
-                        Map.Entry mapping = (Map.Entry)iterator.next();
-                        List<providerdetail> pd = (List<providerdetail>) mapping.getValue();
-                        for(int i=0;i<pd.size();i++){
-                            if(((providerdetail) hm.get(pd.get(i).getName_provider())).isLiked()){
-                                favouriteList.add(((providerdetail) hm.get(pd.get(i).getName_provider())));
-                            }
-                        }
+                    for(int i=0;i<overallPList.size();i++){
 
+                        if(pref.getBoolean(overallPList.get(i).getId(),false)){
+                            favouriteList.add(overallPList.get(i));
+                        }
                     }
 
                     favouriteAdapter adapter = new favouriteAdapter(context, favouriteList);
-
-                    p(lv.toString());
                     lv.setAdapter(adapter);
-                    lv.setOnItemClickListener(null);
-
-//                    dialog.setContentView(view2);
-//                    dialog.show();
-                    alertBuilder.setView(view2);
+                    alertBuilder.setView(view2).setCancelable(true);
                     Dialog dialog = alertBuilder.create();
                     dialog.show();
                 }
@@ -352,15 +365,20 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                     phone2.setText("Phone: "+ pd[0].get(i[0]).getPhone());
                     mail.setText("Mail: "+ pd[0].get(i[0]).getEmail());
                     outof.setText((i[0]+1)+" of "+pd[0].size());
-                    favourite_button.setLiked(((providerdetail)hm.get(pd[0].get(i[0]).getName_provider())).isLiked());
+                    favourite_button.setLiked(pref.getBoolean(pd[0].get(i[0]).getId(),false));
+                    //favourite_button.setLiked(((providerdetail)hm.get(pd[0].get(i[0]).getId())).isLiked());
                     favourite_button.setOnLikeListener(new OnLikeListener() {
                         @Override
                         public void liked(LikeButton likeButton) {
-                            ((providerdetail)hm.get(pd[0].get(i[0]).getName_provider())).setLiked(true);
+                            editor.remove(pd[0].get(i[0]).getId());
+                            editor.putBoolean(pd[0].get(i[0]).getId(),true);
+                            editor.commit();
                         }
                         @Override
                         public void unLiked(LikeButton likeButton) {
-                            ((providerdetail)hm.get(pd[0].get(i[0]).getName_provider())).setLiked(false);
+                            editor.remove(pd[0].get(i[0]).getId());
+                            editor.putBoolean(pd[0].get(i[0]).getId(),false);
+                            editor.commit();
                         }
                     });
 
@@ -404,15 +422,19 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                 phone2.setText("Phone: "+ pd[0].get(i[0]).getPhone());
                 mail.setText("Mail: "+ pd[0].get(i[0]).getEmail());
                 outof.setText((i[0]+1)+" of "+pd[0].size());
-                favourite_button.setLiked(((providerdetail)hm.get(pd[0].get(i[0]).getName_provider())).isLiked());
+                favourite_button.setLiked(((providerdetail)hm.get(pd[0].get(i[0]).getId())).isLiked());
                 favourite_button.setOnLikeListener(new OnLikeListener() {
                     @Override
                     public void liked(LikeButton likeButton) {
-                        ((providerdetail)hm.get(pd[0].get(i[0]).getName_provider())).setLiked(true);
+                        editor.remove(pd[0].get(i[0]).getId());
+                        editor.putBoolean(pd[0].get(i[0]).getId(),true);
+                        editor.commit();
                     }
                     @Override
                     public void unLiked(LikeButton likeButton) {
-                        ((providerdetail)hm.get(pd[0].get(i[0]).getName_provider())).setLiked(false);
+                        editor.remove(pd[0].get(i[0]).getId());
+                        editor.putBoolean(pd[0].get(i[0]).getId(),false);
+                        editor.commit();
                     }
                 });
             }
@@ -431,15 +453,19 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                 phone2.setText("Phone: "+ pd[0].get(i[0]).getPhone());
                 mail.setText("Mail: "+ pd[0].get(i[0]).getEmail());
                 outof.setText((i[0]+1)+" of "+pd[0].size());
-                favourite_button.setLiked(((providerdetail)hm.get(pd[0].get(i[0]).getName_provider())).isLiked());
+                favourite_button.setLiked(((providerdetail)hm.get(pd[0].get(i[0]).getId())).isLiked());
                 favourite_button.setOnLikeListener(new OnLikeListener() {
                     @Override
                     public void liked(LikeButton likeButton) {
-                        ((providerdetail)hm.get(pd[0].get(i[0]).getName_provider())).setLiked(true);
+                        editor.remove(pd[0].get(i[0]).getId());
+                        editor.putBoolean(pd[0].get(i[0]).getId(),true);
+                        editor.commit();
                     }
                     @Override
                     public void unLiked(LikeButton likeButton) {
-                        ((providerdetail)hm.get(pd[0].get(i[0]).getName_provider())).setLiked(false);
+                        editor.remove(pd[0].get(i[0]).getId());
+                        editor.putBoolean(pd[0].get(i[0]).getId(),false);
+                        editor.commit();
                     }
                 });
 
@@ -518,6 +544,10 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
 
     void JSON(){
         num_near = 0;
+        if(a==0){
+            init();
+            a=1;
+        }
         plist = new ArrayList<>();
         JsonObjectRequest getRequest = new JsonObjectRequest(Request.Method.GET, url,
                 new Response.Listener<JSONObject>()
@@ -537,12 +567,13 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
 
                                     if(distance_home<=shape.getRadius()){
                                         num_near++;
+                                        p("key: "+key);
                                         //Marker tmpmarker = mMap.addMarker(new MarkerOptions().position(tmp).title(js.getString("name_provider")).snippet(js.getString("address")).icon(BitmapDescriptorFactory.fromResource(resID)));
-                                        providerdetail ptmp = new providerdetail(js.getDouble("lat"),js.getDouble("lng"),js.getString("mycat"),js.getString("name_provider"),js.getString("phone"),js.getString("email"),js.getString("address"),js.getString("website"),js.getString("countrycode"),js.getString("username"));
+                                        providerdetail ptmp = new providerdetail(key,js.getDouble("lat"),js.getDouble("lng"),js.getString("mycat"),js.getString("name_provider"),js.getString("phone"),js.getString("email"),js.getString("address"),js.getString("website"),js.getString("countrycode"),js.getString("username"));
                                         plist.add(ptmp);
-                                        if(!hm.containsKey(ptmp.getName_provider())){
+                                        if(!hm.containsKey(key)){
                                             p("does_not_contain");
-                                            hm.put(ptmp.getName_provider(),ptmp);
+                                            hm.put(key,ptmp);
                                         }
                                         else{
                                             p("contains");
@@ -553,6 +584,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                                 e.printStackTrace();
                             }
                         }
+                        editor.commit();
                         List<providerdetail> tmpPlist = plist;
                         List<customArray> groups = geolocgroup1(tmpPlist,currentZoom);
                         drawgroups(groups);
@@ -569,6 +601,49 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         );
         Volley.newRequestQueue(this).add(getRequest);
 
+    }
+
+    void init(){
+        overallPList = new ArrayList<>();
+        JsonObjectRequest getRequest = new JsonObjectRequest(Request.Method.GET, url,
+                new Response.Listener<JSONObject>()
+                {
+                    @Override
+                    public void onResponse(JSONObject response) {
+                        Log.d("Response", response.toString());
+                        Iterator<?> keys = response.keys();
+
+                        while( keys.hasNext() ) {
+                            String key = (String)keys.next();
+                            try {
+                                if ( response.get(key) instanceof JSONObject ) {
+                                    JSONObject js = (JSONObject) response.get(key);
+                                    LatLng tmp = new LatLng(js.getDouble("lat"),js.getDouble("lng"));
+                                        num_near++;
+                                        p("key: "+key);
+                                        //Marker tmpmarker = mMap.addMarker(new MarkerOptions().position(tmp).title(js.getString("name_provider")).snippet(js.getString("address")).icon(BitmapDescriptorFactory.fromResource(resID)));
+                                        providerdetail ptmp = new providerdetail(key,js.getDouble("lat"),js.getDouble("lng"),js.getString("mycat"),js.getString("name_provider"),js.getString("phone"),js.getString("email"),js.getString("address"),js.getString("website"),js.getString("countrycode"),js.getString("username"));
+                                        overallPList.add(ptmp);
+                                        if(!pref.contains(key)){
+                                            editor.putBoolean(key, false);
+                                        }
+                                }
+                            } catch (JSONException e) {
+                                e.printStackTrace();
+                            }
+                        }
+                        editor.commit();
+                    }
+                },
+                new Response.ErrorListener()
+                {
+                    @Override
+                    public void onErrorResponse(VolleyError error) {
+                        Log.d("Error",error.toString());
+                    }
+                }
+        );
+        Volley.newRequestQueue(this).add(getRequest);
     }
 
     double marker_density = 0.00600;
@@ -820,7 +895,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     }
 
     public class providerdetail{
-        String mycat,name_provider,phone,email,address,website,countrycode,username;
+        String mycat,name_provider,phone,email,address,website,countrycode,username,id;
         double lat,lng;
 
         public boolean isLiked() {
@@ -833,7 +908,17 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
 
         boolean liked;
 
-        public providerdetail(double lat, double lng, String mycat, String name_provider, String phone, String email, String address, String website,String countrycode,String username){
+        public String getId() {
+            return id;
+        }
+
+        public void setId(String id) {
+            this.id = id;
+        }
+
+        public providerdetail(String id, double lat, double lng, String mycat, String name_provider, String phone, String email, String address, String website, String countrycode, String username){
+            this.id = id;
+
             this.lat = lat;
             this.lng = lng;
             this.mycat = mycat;

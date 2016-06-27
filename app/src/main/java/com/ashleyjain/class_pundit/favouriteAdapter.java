@@ -65,15 +65,19 @@ public class favouriteAdapter extends BaseAdapter {
         classes.setText("Classes offered: "+row.getMycat());
         phone2.setText("Phone: "+row.getPhone());
         mail.setText("Mail: "+row.getEmail());
-        favourite_button.setLiked(row.isLiked());
+        favourite_button.setLiked(MapsActivity.pref.getBoolean(row.getId(),false));
         favourite_button.setOnLikeListener(new OnLikeListener() {
             @Override
             public void liked(LikeButton likeButton) {
-                row.setLiked(true);
+                MapsActivity.editor.remove(row.getId());
+                MapsActivity.editor.putBoolean(row.getId(),true);
+                MapsActivity.editor.commit();
             }
             @Override
             public void unLiked(LikeButton likeButton) {
-                row.setLiked(false);
+                MapsActivity.editor.remove(row.getId());
+                MapsActivity.editor.putBoolean(row.getId(),false);
+                MapsActivity.editor.commit();
             }
         });
 

@@ -20,37 +20,43 @@
             android:textSize="15sp"
             android:text="Outdoor Activity"
             android:checked="false"
-            android:textStyle="bold" />
+            android:textStyle="bold"
+            android:id="@+id/outdoor"/>
         <CheckBox
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginLeft="5dp"
             android:text="Museum"
-            android:checked="false" />
+            android:checked="false"
+            android:id="@+id/museum"/>
         <CheckBox
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginLeft="5dp"
             android:text="Park"
-            android:checked="false" />
+            android:checked="false"
+            android:id="@+id/park"/>
         <CheckBox
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginLeft="5dp"
             android:text="Farm"
-            android:checked="false" />
+            android:checked="false"
+            android:id="@+id/farm"/>
         <CheckBox
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginLeft="5dp"
             android:text="Boating"
-            android:checked="false" />
+            android:checked="false"
+            android:id="@+id/boating"/>
         <CheckBox
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginLeft="5dp"
             android:text="Hiking"
-            android:checked="false" />
+            android:checked="false"
+            android:id="@+id/hiking"/>
         <CheckBox
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -62,83 +68,193 @@
             android:layout_height="wrap_content"
             android:layout_marginLeft="5dp"
             android:text="Playground"
-            android:checked="false" />
+            android:checked="false"
+            android:id="@+id/playground"/>
         <CheckBox
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginLeft="5dp"
             android:text="Train Ride"
-            android:checked="false" />
+            android:checked="false"
+            android:id="@+id/train_ride"/>
+        <CheckBox
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginLeft="5dp"
+            android:text="Auditorium"
+            android:checked="false"
+            android:id="@+id/auditorium"/>
         <CheckBox
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginLeft="5dp"
             android:text="Botanical Garden"
-            android:checked="false" />
+            android:checked="false"
+            android:id="@+id/botanical_garden"/>
         <CheckBox
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginLeft="5dp"
             android:text="Recreational Centre"
-            android:checked="false" />
+            android:checked="false"
+            android:id="@+id/recreational_centre"/>
         <CheckBox
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginLeft="5dp"
             android:text="Birding"
-            android:checked="false" />
+            android:checked="false"
+            android:id="@+id/birding"/>
         <CheckBox
             android:layout_width="wrap_content"
             android:layout_marginLeft="5dp"
             android:layout_height="wrap_content"
-            android:text="Children Discovery centre"
-            android:checked="false" />
+            android:text="Children's Discovery centre"
+            android:checked="false"
+            android:id="@+id/children_discovery_centre"/>
         <View
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:background="#cccccc"
             android:layout_marginRight="10dp"
             android:layout_marginLeft="10dp"
-            android:minHeight="2dp"/>
+            android:minHeight="2dp" />
         <CheckBox
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="Academic Enrichment"
             android:checked="false"
             android:textSize="15sp"
-            android:textStyle="bold" />
+            android:textStyle="bold"
+            android:id="@+id/academic_enrichment"/>
         <CheckBox
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginLeft="5dp"
             android:text="Debating"
-            android:checked="false" />
+            android:checked="false"
+            android:id="@+id/debating"/>
         <CheckBox
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginLeft="5dp"
             android:text="Math"
-            android:checked="false" />
+            android:checked="false"
+            android:id="@+id/math"/>
         <CheckBox
             android:layout_width="wrap_content"
             android:layout_marginLeft="5dp"
             android:layout_height="wrap_content"
-            android:text="Test Prep" />
+            android:text="Test Prep"
+            android:id="@+id/test_prep" />
         <CheckBox
             android:layout_width="wrap_content"
             android:layout_marginLeft="5dp"
+            android:id="@+id/robotics"
             android:layout_height="wrap_content"
             android:text="Robotics" />
         <CheckBox
             android:layout_width="wrap_content"
+            android:id="@+id/stem"
             android:layout_marginLeft="5dp"
             android:layout_height="wrap_content"
             android:text="STEM" />
         <CheckBox
             android:layout_width="wrap_content"
+            android:id="@+id/writing"
             android:layout_marginLeft="5dp"
             android:layout_height="wrap_content"
             android:text="Writing" />
+        <CheckBox
+            android:layout_width="wrap_content"
+            android:id="@+id/miscellaneous"
+            android:layout_marginLeft="5dp"
+            android:layout_height="wrap_content"
+            android:text="Miscellaneous" />
+        <CheckBox
+            android:layout_width="wrap_content"
+            android:id="@+id/foreign_language"
+            android:layout_marginLeft="5dp"
+            android:layout_height="wrap_content"
+            android:text="Foreign Launguage" />
+        <CheckBox
+            android:layout_width="wrap_content"
+            android:id="@+id/coding"
+            android:layout_marginLeft="5dp"
+            android:layout_height="wrap_content"
+            android:text="Coding" />
+        <CheckBox
+            android:layout_width="wrap_content"
+            android:id="@+id/lego"
+            android:layout_marginLeft="5dp"
+            android:layout_height="wrap_content"
+            android:text="Lego" />
+        <CheckBox
+            android:layout_width="wrap_content"
+            android:id="@+id/yoga"
+            android:layout_marginLeft="5dp"
+            android:layout_height="wrap_content"
+            android:text="Yoga" />
+        <CheckBox
+            android:layout_width="wrap_content"
+            android:id="@+id/public_speaking"
+            android:layout_marginLeft="5dp"
+            android:layout_height="wrap_content"
+            android:text="Public Speaking" />
+        <CheckBox
+            android:layout_width="wrap_content"
+            android:id="@+id/debate"
+            android:layout_marginLeft="5dp"
+            android:layout_height="wrap_content"
+            android:text="Debate" />
+        <CheckBox
+            android:layout_width="wrap_content"
+            android:id="@+id/finance"
+            android:layout_marginLeft="5dp"
+            android:layout_height="wrap_content"
+            android:text="Finance" />
+        <CheckBox
+            android:layout_width="wrap_content"
+            android:id="@+id/reading"
+            android:layout_marginLeft="5dp"
+            android:layout_height="wrap_content"
+            android:text="Reading" />
+        <CheckBox
+            android:layout_width="wrap_content"
+            android:id="@+id/homework"
+            android:layout_marginLeft="5dp"
+            android:layout_height="wrap_content"
+            android:text="Homework" />
+        <CheckBox
+            android:layout_width="wrap_content"
+            android:id="@+id/satprep"
+            android:layout_marginLeft="5dp"
+            android:layout_height="wrap_content"
+            android:text="SAT Prep" />
+        <CheckBox
+            android:layout_width="wrap_content"
+            android:id="@+id/tutoring"
+            android:layout_marginLeft="5dp"
+            android:layout_height="wrap_content"
+            android:text="Tutoring" />
+        <CheckBox
+            android:layout_width="wrap_content"
+            android:id="@+id/vocational"
+            android:layout_marginLeft="5dp"
+            android:layout_height="wrap_content"
+            android:text="Vocational" />
+        <CheckBox
+            android:layout_width="wrap_content"
+            android:id="@+id/amdiminstration"
+            android:layout_marginLeft="5dp"
+            android:layout_height="wrap_content"
+            android:text="Administration of Justice" />
+        <CheckBox
+            android:layout_width="wrap_content"
+            android:id="@+id/biological_sciences"
+            android:layout_marginLeft="5dp"
+            android:layout_height="wrap_content"
+            android:text="Biological Sciences" />
 
     </LinearLayout>
     </ScrollView>
@@ -147,14 +263,14 @@
         android:layout_weight="0.1"
         android:orientation="horizontal"
         android:layout_height="wrap_content">
-    <Button
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:textColor="@color/white"
-        android:layout_marginRight="2dp"
-        android:layout_margin="2dp"
-        android:background="@color/colorPrimary"
-        android:text="search"/>
+        <Button
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textColor="@color/white"
+            android:layout_marginRight="2dp"
+            android:layout_margin="2dp"
+            android:background="@color/colorPrimary"
+            android:text="search"/>
         <Button
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
