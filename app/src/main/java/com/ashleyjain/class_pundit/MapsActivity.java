@@ -9,6 +9,7 @@ import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.location.Address;
 import android.location.Geocoder;
+import android.net.Uri;
 import android.os.Bundle;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.FragmentManager;
@@ -16,6 +17,7 @@ import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
+import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -33,7 +35,6 @@ import com.android.volley.Response;
 import com.android.volley.VolleyError;
 import com.android.volley.toolbox.JsonObjectRequest;
 import com.android.volley.toolbox.Volley;
-import com.github.aakira.expandablelayout.ExpandableRelativeLayout;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GooglePlayServicesNotAvailableException;
 import com.google.android.gms.common.GooglePlayServicesRepairableException;
@@ -60,6 +61,8 @@ import com.mikepenz.materialdrawer.DrawerBuilder;
 import com.mikepenz.materialdrawer.model.PrimaryDrawerItem;
 import com.mikepenz.materialdrawer.model.interfaces.IDrawerItem;
 import com.mikepenz.materialdrawer.model.interfaces.Nameable;
+import com.orhanobut.dialogplus.DialogPlus;
+import com.orhanobut.dialogplus.ViewHolder;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -74,7 +77,6 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
 
     private GoogleMap mMap;
     private GoogleApiClient mGoogleApiClient;
-    ExpandableRelativeLayout expandableLayout;
     TextView title,address,classes,phone2,mail,outof;
     ImageButton left,right;
     LikeButton favourite_button;
@@ -101,13 +103,6 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     //final String url = "http://192.168.8.100/cpnew/allp.json";
     final String url = "http://192.168.0.102/JSONallp.txt";
 
-    @Override
-    public void onBackPressed() {
-        if(expandableLayout.isExpanded())
-            expandableLayout.collapse();
-        else
-            super.onBackPressed();
-    }
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
@@ -230,18 +225,6 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         mapFragment.getMapAsync(this);
         context = this;
 
-        expandableLayout = (ExpandableRelativeLayout) findViewById(R.id.expandableLayout);
-        title = (TextView) findViewById(R.id.title);
-        address = (TextView) findViewById(R.id.address);
-        classes = (TextView) findViewById(R.id.classes);
-        phone2 = (TextView) findViewById(R.id.phone);
-        mail = (TextView) findViewById(R.id.email);
-        left = (ImageButton) findViewById(R.id.left_arrow);
-        right = (ImageButton) findViewById(R.id.right_arrow);
-        outof = (TextView) findViewById(R.id.outoftotal);
-
-        favourite_button = (LikeButton) findViewById(R.id.favourite_button);
-
         final Button inc = (Button) findViewById(R.id.inc);
         inc.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -316,6 +299,21 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                 }
             }
         });
+        final DialogPlus dialogPlus = DialogPlus.newDialog(context)
+                .setCancelable(true)
+                .setGravity(Gravity.BOTTOM)
+                .setPadding(20,20,20,20)
+                .setContentHolder(new ViewHolder(R.layout.prov_detail)).create();
+        View view = dialogPlus.getHolderView();
+        title = (TextView) view.findViewById(R.id.title);
+        address = (TextView) view.findViewById(R.id.address);
+        classes = (TextView) view.findViewById(R.id.classes);
+        phone2 = (TextView) view.findViewById(R.id.phone);
+        mail = (TextView) view.findViewById(R.id.email);
+        left = (ImageButton) view.findViewById(R.id.left_arrow);
+        right = (ImageButton) view.findViewById(R.id.right_arrow);
+        outof = (TextView) view.findViewById(R.id.outoftotal);
+        favourite_button = (LikeButton) view.findViewById(R.id.favourite_button);
 
         final List<providerdetail>[] pd = new ArrayList[]{null};
         final int[] i = {0};
@@ -323,6 +321,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
             @Override
             public boolean onMarkerClick(Marker marker) {
                 if(!marker.isDraggable()){
+
                     i[0] = 0;
                     pd[0] = (List<providerdetail>) hm2.get(marker.getPosition());
                     if(pd[0].size()==1){
@@ -338,49 +337,40 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                     title.setText(pd[0].get(i[0]).getName_provider());
                     address.setText(pd[0].get(i[0]).getAddress());
                     classes.setText("Classes offered: "+ pd[0].get(i[0]).getMycat());
-                    phone2.setText("Phone: "+ pd[0].get(i[0]).getPhone());
-                    mail.setText("Mail: "+ pd[0].get(i[0]).getEmail());
+                    phone2.setText(": "+ pd[0].get(i[0]).getPhone());
+                    mail.setText(": "+ pd[0].get(i[0]).getEmail());
                     outof.setText((i[0]+1)+" of "+pd[0].size());
                     favourite_button.setLiked(pref.getBoolean(pd[0].get(i[0]).getId(),false));
                     //favourite_button.setLiked(((providerdetail)hm.get(pd[0].get(i[0]).getId())).isLiked());
-                    favourite_button.setOnLikeListener(new OnLikeListener() {
-                        @Override
-                        public void liked(LikeButton likeButton) {
-                            editor.remove(pd[0].get(i[0]).getId());
-                            editor.putBoolean(pd[0].get(i[0]).getId(),true);
-                            editor.commit();
-                        }
-                        @Override
-                        public void unLiked(LikeButton likeButton) {
-                            editor.remove(pd[0].get(i[0]).getId());
-                            editor.putBoolean(pd[0].get(i[0]).getId(),false);
-                            editor.commit();
-                        }
-                    });
-
-//                    final providerdetail pd = (providerdetail) hm.get(marker.getPosition());
-//                    title.setText(marker.getTitle());
-//                    address.setText(marker.getSnippet());
-//                    classes.setText("Classes offered: "+pd.getMycat());
-//                    phone2.setText("Phone: "+pd.getPhone());
-//                    mail.setText("Mail: "+pd.getEmail());
-//                    favourite_button.setLiked(pd.isLiked());
-//                    favourite_button.setOnLikeListener(new OnLikeListener() {
-//                        @Override
-//                        public void liked(LikeButton likeButton) {
-//                            pd.setLiked(true);
-//                        }
-//                        @Override
-//                        public void unLiked(LikeButton likeButton) {
-//                            pd.setLiked(false);
-//                        }
-//                    });
-                    expandableLayout.expand();
+                        dialogPlus.show();
                 }
                 else{
                     marker.showInfoWindow();
                 }
                 return true;
+            }
+        });
+
+        favourite_button.setOnLikeListener(new OnLikeListener() {
+            @Override
+            public void liked(LikeButton likeButton) {
+                editor.remove(pd[0].get(i[0]).getId());
+                editor.putBoolean(pd[0].get(i[0]).getId(),true);
+                editor.commit();
+            }
+            @Override
+            public void unLiked(LikeButton likeButton) {
+                editor.remove(pd[0].get(i[0]).getId());
+                editor.putBoolean(pd[0].get(i[0]).getId(),false);
+                editor.commit();
+            }
+        });
+
+        title.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent browserIntent = new Intent(Intent.ACTION_VIEW, Uri.parse(pd[0].get(i[0]).getWebsite()));
+                startActivity(browserIntent);
             }
         });
 
@@ -395,24 +385,24 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                 title.setText(pd[0].get(i[0]).getName_provider());
                 address.setText(pd[0].get(i[0]).getAddress());
                 classes.setText("Classes offered: "+ pd[0].get(i[0]).getMycat());
-                phone2.setText("Phone: "+ pd[0].get(i[0]).getPhone());
-                mail.setText("Mail: "+ pd[0].get(i[0]).getEmail());
+                phone2.setText(": "+ pd[0].get(i[0]).getPhone());
+                mail.setText(": "+ pd[0].get(i[0]).getEmail());
                 outof.setText((i[0]+1)+" of "+pd[0].size());
                 favourite_button.setLiked(((providerdetail)hm.get(pd[0].get(i[0]).getId())).isLiked());
-                favourite_button.setOnLikeListener(new OnLikeListener() {
-                    @Override
-                    public void liked(LikeButton likeButton) {
-                        editor.remove(pd[0].get(i[0]).getId());
-                        editor.putBoolean(pd[0].get(i[0]).getId(),true);
-                        editor.commit();
-                    }
-                    @Override
-                    public void unLiked(LikeButton likeButton) {
-                        editor.remove(pd[0].get(i[0]).getId());
-                        editor.putBoolean(pd[0].get(i[0]).getId(),false);
-                        editor.commit();
-                    }
-                });
+//                favourite_button.setOnLikeListener(new OnLikeListener() {
+//                    @Override
+//                    public void liked(LikeButton likeButton) {
+//                        editor.remove(pd[0].get(i[0]).getId());
+//                        editor.putBoolean(pd[0].get(i[0]).getId(),true);
+//                        editor.commit();
+//                    }
+//                    @Override
+//                    public void unLiked(LikeButton likeButton) {
+//                        editor.remove(pd[0].get(i[0]).getId());
+//                        editor.putBoolean(pd[0].get(i[0]).getId(),false);
+//                        editor.commit();
+//                    }
+//                });
             }
         });
         right.setOnClickListener(new View.OnClickListener() {
@@ -426,24 +416,24 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                 title.setText(pd[0].get(i[0]).getName_provider());
                 address.setText(pd[0].get(i[0]).getAddress());
                 classes.setText("Classes offered: "+ pd[0].get(i[0]).getMycat());
-                phone2.setText("Phone: "+ pd[0].get(i[0]).getPhone());
-                mail.setText("Mail: "+ pd[0].get(i[0]).getEmail());
+                phone2.setText(": "+ pd[0].get(i[0]).getPhone());
+                mail.setText(": "+ pd[0].get(i[0]).getEmail());
                 outof.setText((i[0]+1)+" of "+pd[0].size());
                 favourite_button.setLiked(((providerdetail)hm.get(pd[0].get(i[0]).getId())).isLiked());
-                favourite_button.setOnLikeListener(new OnLikeListener() {
-                    @Override
-                    public void liked(LikeButton likeButton) {
-                        editor.remove(pd[0].get(i[0]).getId());
-                        editor.putBoolean(pd[0].get(i[0]).getId(),true);
-                        editor.commit();
-                    }
-                    @Override
-                    public void unLiked(LikeButton likeButton) {
-                        editor.remove(pd[0].get(i[0]).getId());
-                        editor.putBoolean(pd[0].get(i[0]).getId(),false);
-                        editor.commit();
-                    }
-                });
+//                favourite_button.setOnLikeListener(new OnLikeListener() {
+//                    @Override
+//                    public void liked(LikeButton likeButton) {
+//                        editor.remove(pd[0].get(i[0]).getId());
+//                        editor.putBoolean(pd[0].get(i[0]).getId(),true);
+//                        editor.commit();
+//                    }
+//                    @Override
+//                    public void unLiked(LikeButton likeButton) {
+//                        editor.remove(pd[0].get(i[0]).getId());
+//                        editor.putBoolean(pd[0].get(i[0]).getId(),false);
+//                        editor.commit();
+//                    }
+//                });
 
             }
         });
