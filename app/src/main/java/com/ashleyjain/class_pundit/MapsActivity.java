@@ -95,6 +95,9 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     public static SharedPreferences pref;
     List<providerdetail> overallPList;
     int a = 0;
+    final List<providerdetail>[] pd = new ArrayList[]{null};
+    final int[] i = {0};
+    DialogPlus dialogPlus;
 
     //drawer
     public static Drawer drawer = null;
@@ -179,17 +182,26 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
             @Override
             public boolean onItemClick(View view, int position, IDrawerItem drawerItem) {
                 String name = ((Nameable) drawerItem).getName().toString();
-                View dilogview = null;
-                AlertDialog.Builder alertBuilder = new AlertDialog.Builder(context);
-                if(name.equals("About us")){
-                    dilogview = (LayoutInflater.from(context)).inflate(R.layout.aboutus, null);
-                }
-                else if(name.equals("Contact us")){
-                    dilogview = (LayoutInflater.from(context)).inflate(R.layout.contactus, null);
+                if(name.equals("About us")||name.equals("Contact us")||name.equals("How It Works")){
+                    View dilogview = null;
+                    AlertDialog.Builder alertBuilder = new AlertDialog.Builder(context);
+
+                    if(name.equals("About us")){
+                        dilogview = (LayoutInflater.from(context)).inflate(R.layout.aboutus, null);
+                    }
+                    else if(name.equals("Contact us")){
+                        dilogview = (LayoutInflater.from(context)).inflate(R.layout.contactus, null);
+                    }
+                    else if(name.equals("How It Works")){
+                        dilogview = (LayoutInflater.from(context)).inflate(R.layout.tutorial, null);
+                    }
+                    alertBuilder.setView(dilogview).setCancelable(true);
+                    Dialog dialog = alertBuilder.create();
+                    dialog.show();
                 }
                 else if(name.equals("Favourite")){
-                    dilogview = getLayoutInflater().inflate(R.layout.favouritelist, null);
-                    lv = (ListView) dilogview.findViewById(android.R.id.list);
+                    //dilogview = getLayoutInflater().inflate(R.layout.favouritelist, null);
+                    //lv = (ListView) dilogview.findViewById(android.R.id.list);
                     ArrayList<providerdetail> favouriteList;
                     favouriteList = new ArrayList<>();
 
@@ -199,15 +211,30 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                         }
                     }
 
-                    favouriteAdapter adapter = new favouriteAdapter(context, favouriteList);
-                    lv.setAdapter(adapter);
+                    i[0] = 0;
+                    pd[0] = favouriteList;
+                    if(pd[0].size()!=0){
+                        if(pd[0].size()==1){
+                            outof.setVisibility(View.INVISIBLE);
+                            left.setVisibility(View.INVISIBLE);
+                            right.setVisibility(View.INVISIBLE);
+                        }
+                        else{
+                            outof.setVisibility(View.VISIBLE);
+                            left.setVisibility(View.VISIBLE);
+                            right.setVisibility(View.VISIBLE);
+                        }
+                        set_provider_details();
+                        dialogPlus.show();
+                    }
+                    else{
+                        t("Empty!! No favourite");
+                    }
+
+                    //favouriteAdapter adapter = new favouriteAdapter(context, favouriteList);
+                    //lv.setAdapter(adapter);
                 }
-                else if(name.equals("How It Works")){
-                    dilogview = (LayoutInflater.from(context)).inflate(R.layout.tutorial, null);
-                }
-                alertBuilder.setView(dilogview).setCancelable(true);
-                Dialog dialog = alertBuilder.create();
-                dialog.show();
+
 
                 return false;
             }
@@ -299,7 +326,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                 }
             }
         });
-        final DialogPlus dialogPlus = DialogPlus.newDialog(context)
+        dialogPlus = DialogPlus.newDialog(context)
                 .setCancelable(true)
                 .setGravity(Gravity.BOTTOM)
                 .setPadding(20,20,20,20)
@@ -315,8 +342,6 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         outof = (TextView) view.findViewById(R.id.outoftotal);
         favourite_button = (LikeButton) view.findViewById(R.id.favourite_button);
 
-        final List<providerdetail>[] pd = new ArrayList[]{null};
-        final int[] i = {0};
         mMap.setOnMarkerClickListener(new GoogleMap.OnMarkerClickListener() {
             @Override
             public boolean onMarkerClick(Marker marker) {
@@ -334,13 +359,8 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                         left.setVisibility(View.VISIBLE);
                         right.setVisibility(View.VISIBLE);
                     }
-                    title.setText(pd[0].get(i[0]).getName_provider());
-                    address.setText(pd[0].get(i[0]).getAddress());
-                    classes.setText("Classes offered: "+ pd[0].get(i[0]).getMycat());
-                    phone2.setText(": "+ pd[0].get(i[0]).getPhone());
-                    mail.setText(": "+ pd[0].get(i[0]).getEmail());
-                    outof.setText((i[0]+1)+" of "+pd[0].size());
-                    favourite_button.setLiked(pref.getBoolean(pd[0].get(i[0]).getId(),false));
+                    set_provider_details();
+
                     //favourite_button.setLiked(((providerdetail)hm.get(pd[0].get(i[0]).getId())).isLiked());
                         dialogPlus.show();
                 }
@@ -350,7 +370,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                 return true;
             }
         });
-
+        favourite_button.setEnabled(false);
         favourite_button.setOnLikeListener(new OnLikeListener() {
             @Override
             public void liked(LikeButton likeButton) {
@@ -363,6 +383,13 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                 editor.remove(pd[0].get(i[0]).getId());
                 editor.putBoolean(pd[0].get(i[0]).getId(),false);
                 editor.commit();
+            }
+        });
+
+        favourite_button.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                t("fewa");
             }
         });
 
@@ -381,14 +408,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                 if(i[0]<0){
                     i[0]=pd[0].size()-1;
                 }
-
-                title.setText(pd[0].get(i[0]).getName_provider());
-                address.setText(pd[0].get(i[0]).getAddress());
-                classes.setText("Classes offered: "+ pd[0].get(i[0]).getMycat());
-                phone2.setText(": "+ pd[0].get(i[0]).getPhone());
-                mail.setText(": "+ pd[0].get(i[0]).getEmail());
-                outof.setText((i[0]+1)+" of "+pd[0].size());
-                favourite_button.setLiked(((providerdetail)hm.get(pd[0].get(i[0]).getId())).isLiked());
+                set_provider_details();
 //                favourite_button.setOnLikeListener(new OnLikeListener() {
 //                    @Override
 //                    public void liked(LikeButton likeButton) {
@@ -413,13 +433,8 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                     i[0]=0;
                 }
 
-                title.setText(pd[0].get(i[0]).getName_provider());
-                address.setText(pd[0].get(i[0]).getAddress());
-                classes.setText("Classes offered: "+ pd[0].get(i[0]).getMycat());
-                phone2.setText(": "+ pd[0].get(i[0]).getPhone());
-                mail.setText(": "+ pd[0].get(i[0]).getEmail());
-                outof.setText((i[0]+1)+" of "+pd[0].size());
-                favourite_button.setLiked(((providerdetail)hm.get(pd[0].get(i[0]).getId())).isLiked());
+                set_provider_details();
+
 //                favourite_button.setOnLikeListener(new OnLikeListener() {
 //                    @Override
 //                    public void liked(LikeButton likeButton) {
@@ -451,6 +466,29 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         }
         mMap.setMyLocationEnabled(true);
 
+    }
+
+    void set_provider_details(){
+        title.setText(pd[0].get(i[0]).getName_provider());
+        address.setText(pd[0].get(i[0]).getAddress());
+        classes.setText("Classes offered: "+ pd[0].get(i[0]).getMycat());
+        if(pd[0].get(i[0]).getPhone().equals("")){
+            phone2.setVisibility(View.GONE);
+        }
+        else{
+            phone2.setVisibility(View.VISIBLE);
+            phone2.setText(" "+ pd[0].get(i[0]).getPhone());
+        }
+        if(pd[0].get(i[0]).getEmail().equals("")){
+            mail.setVisibility(View.GONE);
+        }
+        else{
+            mail.setVisibility(View.VISIBLE);
+            mail.setText(" "+ pd[0].get(i[0]).getEmail());
+            p("mail: "+pd[0].get(i[0]).getEmail());
+        }
+        outof.setText((i[0]+1)+" of "+pd[0].size());
+        favourite_button.setLiked(pref.getBoolean(pd[0].get(i[0]).getId(),false));
     }
 
     @Override
