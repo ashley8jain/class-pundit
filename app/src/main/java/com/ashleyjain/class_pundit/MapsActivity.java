@@ -1,7 +1,9 @@
 package com.ashleyjain.class_pundit;
 
 import android.Manifest;
+import android.app.Activity;
 import android.app.Dialog;
+import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -25,6 +27,7 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
+import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.ListView;
 import android.widget.TextView;
@@ -34,6 +37,7 @@ import com.android.volley.Request;
 import com.android.volley.Response;
 import com.android.volley.VolleyError;
 import com.android.volley.toolbox.JsonObjectRequest;
+import com.android.volley.toolbox.StringRequest;
 import com.android.volley.toolbox.Volley;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GooglePlayServicesNotAvailableException;
@@ -55,7 +59,6 @@ import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.like.LikeButton;
-import com.like.OnLikeListener;
 import com.mikepenz.materialdrawer.Drawer;
 import com.mikepenz.materialdrawer.DrawerBuilder;
 import com.mikepenz.materialdrawer.model.PrimaryDrawerItem;
@@ -64,6 +67,7 @@ import com.mikepenz.materialdrawer.model.interfaces.Nameable;
 import com.orhanobut.dialogplus.DialogPlus;
 import com.orhanobut.dialogplus.ViewHolder;
 
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -72,6 +76,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 
 public class MapsActivity extends AppCompatActivity implements OnMapReadyCallback,GoogleApiClient.OnConnectionFailedListener {
 
@@ -119,16 +124,78 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         //KeyboardDown.keyboardDown();
         switch (item.getItemId()) {
             case R.id.search:
-                try {
-                    Intent intent =
-                            new PlaceAutocomplete.IntentBuilder(PlaceAutocomplete.MODE_OVERLAY)
-                                    .build(this);
-                    startActivityForResult(intent, PLACE_AUTOCOMPLETE_REQUEST_CODE);
-                } catch (GooglePlayServicesRepairableException e) {
-                    // TODO: Handle the error.
-                } catch (GooglePlayServicesNotAvailableException e) {
-                    // TODO: Handle the error.
-                }
+                final View dilogview = (LayoutInflater.from(context)).inflate(R.layout.search, null);;
+                AlertDialog.Builder alertBuilder = new AlertDialog.Builder(context);
+                final EditText classes = (EditText) dilogview.findViewById(R.id.classes);
+                Button chplace = (Button) dilogview.findViewById(R.id.chplace);
+                alertBuilder.setView(dilogview).setCancelable(true);
+                final Dialog dialog = alertBuilder.create();
+                dialog.show();
+                chplace.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        dialog.hide();
+                        try {
+                            Intent intent =
+                                    new PlaceAutocomplete.IntentBuilder(PlaceAutocomplete.MODE_OVERLAY)
+                                            .build((Activity) context);
+                            startActivityForResult(intent, PLACE_AUTOCOMPLETE_REQUEST_CODE);
+                        } catch (GooglePlayServicesRepairableException e) {
+                            // TODO: Handle the error.
+                        } catch (GooglePlayServicesNotAvailableException e) {
+                            // TODO: Handle the error.
+                        }
+                    }
+                });
+                Button search = (Button) dilogview.findViewById(R.id.searchh);
+                search.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        if(classes.getText().equals(""))
+                            classes.setError("Empty");
+                        else{
+                            dialog.hide();
+                            final ProgressDialog dialog2 = ProgressDialog.show(context, "", "Loading...", true);
+                            StringRequest stringRequest = new StringRequest(Request.Method.POST, "http://www.classpundit.com/gen.php/ajaxactions",
+                                    new Response.Listener<String>() {
+                                        @Override
+                                        public void onResponse(String response) {
+                                            try {
+                                                JSONObject jsonResponse = new JSONObject(response);
+                                                JSONObject dataobject = jsonResponse.getJSONObject("data");
+                                                JSONArray activep = dataobject.getJSONArray("activep");
+                                                t(activep.toString());
+                                                dialog2.dismiss();
+                                            } catch (JSONException e) {
+                                                e.printStackTrace();
+                                                dialog2.dismiss();
+                                            }
+                                        }
+                                    },
+                                    new Response.ErrorListener() {
+                                        @Override
+                                        public void onErrorResponse(VolleyError error) {
+                                            Toast.makeText(context, error.toString(), Toast.LENGTH_SHORT).show();
+                                            dialog2.dismiss();
+                                        }
+                                    }
+                            ) {
+                                @Override
+                                protected Map<String, String> getParams() {
+                                    Map<String, String> params = new HashMap<String, String>();
+                                    params.put("action", "search");
+                                    params.put("keyw", classes.getText().toString());
+                                    System.out.println(params);
+                                    return params;
+                                }
+
+                            };
+                            Volley.newRequestQueue(context).add(stringRequest);
+
+                        }
+                    }
+                });
+
                 return true;
 
             case R.id.filter:
@@ -370,28 +437,27 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                 return true;
             }
         });
-        favourite_button.setEnabled(false);
-        favourite_button.setOnLikeListener(new OnLikeListener() {
-            @Override
-            public void liked(LikeButton likeButton) {
-                editor.remove(pd[0].get(i[0]).getId());
-                editor.putBoolean(pd[0].get(i[0]).getId(),true);
-                editor.commit();
-            }
-            @Override
-            public void unLiked(LikeButton likeButton) {
-                editor.remove(pd[0].get(i[0]).getId());
-                editor.putBoolean(pd[0].get(i[0]).getId(),false);
-                editor.commit();
-            }
-        });
-
-        favourite_button.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                t("fewa");
-            }
-        });
+//        favourite_button.setOnLikeListener(new OnLikeListener() {
+//            @Override
+//            public void liked(LikeButton likeButton) {
+//                editor.remove(pd[0].get(i[0]).getId());
+//                editor.putBoolean(pd[0].get(i[0]).getId(),true);
+//                editor.commit();
+//            }
+//            @Override
+//            public void unLiked(LikeButton likeButton) {
+//                editor.remove(pd[0].get(i[0]).getId());
+//                editor.putBoolean(pd[0].get(i[0]).getId(),false);
+//                editor.commit();
+//            }
+//        });
+//
+//        favourite_button.setOnClickListener(new View.OnClickListener() {
+//            @Override
+//            public void onClick(View v) {
+//                t("fewa");
+//            }
+//        });
 
         title.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -485,10 +551,9 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         else{
             mail.setVisibility(View.VISIBLE);
             mail.setText(" "+ pd[0].get(i[0]).getEmail());
-            p("mail: "+pd[0].get(i[0]).getEmail());
         }
         outof.setText((i[0]+1)+" of "+pd[0].size());
-        favourite_button.setLiked(pref.getBoolean(pd[0].get(i[0]).getId(),false));
+        //favourite_button.setLiked(pref.getBoolean(pd[0].get(i[0]).getId(),false));
     }
 
     @Override
