@@ -9,8 +9,6 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
-import android.location.Address;
-import android.location.Geocoder;
 import android.net.Uri;
 import android.os.Bundle;
 import android.support.v4.app.ActivityCompat;
@@ -25,7 +23,6 @@ import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
-import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageButton;
@@ -71,7 +68,6 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -94,17 +90,15 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     int num_near = 0;
     HashMap hm = new HashMap();
     HashMap hm2;
-    List<providerdetail> plist;
     private float currentZoom = -1;
     public static SharedPreferences.Editor editor;
     public static SharedPreferences pref;
-    List<providerdetail> overallPList;
-    int a = 0;
+    List<providerdetail> overallPList,plist,activep;
     final List<providerdetail>[] pd = new ArrayList[]{null};
     final int[] i = {0};
     DialogPlus dialogPlus;
+    Marker homemarker;
 
-    //drawer
     public static Drawer drawer = null;
     DrawerBuilder builder=null;
 
@@ -121,7 +115,6 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-        //KeyboardDown.keyboardDown();
         switch (item.getItemId()) {
             case R.id.search:
                 final View dilogview = (LayoutInflater.from(context)).inflate(R.layout.search, null);;
@@ -227,7 +220,6 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
             @Override
             public void onClick(View v) {
                 drawer.openDrawer();
-                // KeyboardDown.keyboardDown();
             }
         });
 
@@ -267,8 +259,6 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                     dialog.show();
                 }
                 else if(name.equals("Favourite")){
-                    //dilogview = getLayoutInflater().inflate(R.layout.favouritelist, null);
-                    //lv = (ListView) dilogview.findViewById(android.R.id.list);
                     ArrayList<providerdetail> favouriteList;
                     favouriteList = new ArrayList<>();
 
@@ -297,9 +287,6 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                     else{
                         t("Empty!! No favourite");
                     }
-
-                    //favouriteAdapter adapter = new favouriteAdapter(context, favouriteList);
-                    //lv.setAdapter(adapter);
                 }
 
 
@@ -323,22 +310,16 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         inc.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if(shape!=null){
-                    mMap.clear();
                     shape.setRadius(radius=radius+500);
                     reDisplay();
-                }
             }
         });
         Button dec = (Button) findViewById(R.id.dec);
         dec.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if(shape!=null){
-                    mMap.clear();
                     shape.setRadius(radius=radius-500);
                     reDisplay();
-                }
             }
         });
 
@@ -352,13 +333,8 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         mMap.getUiSettings().setZoomControlsEnabled(true);
         mMap.getUiSettings().setRotateGesturesEnabled(false);
         mMap.getUiSettings().setCompassEnabled(true);
-        radius = 8046.72;
-        LatLng sydney = new LatLng(37.610029, -122.079577);
-        marker = mMap.addMarker(new MarkerOptions().position(sydney).title("Marker in Sydney").icon(BitmapDescriptorFactory.fromResource(R.drawable.homem)).draggable(true));
-        CircleOptions options = new CircleOptions().center(sydney).radius(radius).fillColor(0x330000FF).strokeColor(Color.RED).strokeWidth(3);
-        shape = mMap.addCircle(options);
-        mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(sydney,12.0f));
-        JSON();
+        init();
+        //JSON();
 
         mMap.setOnMarkerDragListener(new GoogleMap.OnMarkerDragListener() {
             @Override
@@ -367,16 +343,11 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
 
             @Override
             public void onMarkerDrag(Marker marker) {
-                removeShape();
-                LatLng ll = marker.getPosition();
-                CircleOptions options = new CircleOptions().center(new LatLng(ll.latitude,ll.longitude)).radius(radius).fillColor(0x330000FF).strokeColor(Color.RED).strokeWidth(3);
-                shape = mMap.addCircle(options);
+                shape.setCenter(marker.getPosition());
             }
 
             @Override
             public void onMarkerDragEnd(Marker marker) {
-                removeShape();
-                mMap.clear();
                 reDisplay();
             }
         });
@@ -387,8 +358,6 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
             public void onCameraChange(CameraPosition position) {
                 if (position.zoom != currentZoom){
                     currentZoom = position.zoom;
-                    removeShape();
-                    mMap.clear();
                     reDisplay();
                 }
             }
@@ -437,27 +406,6 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                 return true;
             }
         });
-//        favourite_button.setOnLikeListener(new OnLikeListener() {
-//            @Override
-//            public void liked(LikeButton likeButton) {
-//                editor.remove(pd[0].get(i[0]).getId());
-//                editor.putBoolean(pd[0].get(i[0]).getId(),true);
-//                editor.commit();
-//            }
-//            @Override
-//            public void unLiked(LikeButton likeButton) {
-//                editor.remove(pd[0].get(i[0]).getId());
-//                editor.putBoolean(pd[0].get(i[0]).getId(),false);
-//                editor.commit();
-//            }
-//        });
-//
-//        favourite_button.setOnClickListener(new View.OnClickListener() {
-//            @Override
-//            public void onClick(View v) {
-//                t("fewa");
-//            }
-//        });
 
         title.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -475,20 +423,6 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                     i[0]=pd[0].size()-1;
                 }
                 set_provider_details();
-//                favourite_button.setOnLikeListener(new OnLikeListener() {
-//                    @Override
-//                    public void liked(LikeButton likeButton) {
-//                        editor.remove(pd[0].get(i[0]).getId());
-//                        editor.putBoolean(pd[0].get(i[0]).getId(),true);
-//                        editor.commit();
-//                    }
-//                    @Override
-//                    public void unLiked(LikeButton likeButton) {
-//                        editor.remove(pd[0].get(i[0]).getId());
-//                        editor.putBoolean(pd[0].get(i[0]).getId(),false);
-//                        editor.commit();
-//                    }
-//                });
             }
         });
         right.setOnClickListener(new View.OnClickListener() {
@@ -553,7 +487,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
             mail.setText(" "+ pd[0].get(i[0]).getEmail());
         }
         outof.setText((i[0]+1)+" of "+pd[0].size());
-        //favourite_button.setLiked(pref.getBoolean(pd[0].get(i[0]).getId(),false));
+        favourite_button.setLiked(pref.getBoolean(pd[0].get(i[0]).getId(),false));
     }
 
     @Override
@@ -561,11 +495,10 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         if (requestCode == PLACE_AUTOCOMPLETE_REQUEST_CODE) {
             if (resultCode == RESULT_OK) {
                 Place place = PlaceAutocomplete.getPlace(this, data);
-                marker = mMap.addMarker(new MarkerOptions().position(place.getLatLng()).title(place.getName().toString()).snippet(place.getAddress().toString()).icon(BitmapDescriptorFactory.fromResource(R.drawable.homem)).draggable(true));
-                        CircleOptions options = new CircleOptions().center(place.getLatLng()).radius(radius).fillColor(0x330000FF).strokeColor(Color.RED).strokeWidth(3);
-                        shape = mMap.addCircle(options);
-                        mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(place.getLatLng(), 12.0f));
-                        JSON();
+                homemarker.setPosition(place.getLatLng());
+                shape.setCenter(place.getLatLng());
+                mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(place.getLatLng(), 12.0f));
+                reDisplay();
                 Log.i("search", "Place: " + place.getName());
             } else if (resultCode == PlaceAutocomplete.RESULT_ERROR) {
                 Status status = PlaceAutocomplete.getStatus(this, data);
@@ -579,100 +512,51 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     }
 
 
-
-
-
-
-
-
-
-
-
-
-    void removeShape(){
-        if(shape!=null){
-            shape.remove();
-            shape = null;
-        }
-    }
-
-    void removeMarker(){
-        if(marker!=null){
-            marker.remove();
-            marker = null;
-        }
-    }
-
-    void hideKeyboard(){
-        View view = this.getCurrentFocus();
-        if (view != null) {
-            InputMethodManager imm = (InputMethodManager)getSystemService(Context.INPUT_METHOD_SERVICE);
-            imm.hideSoftInputFromWindow(view.getWindowToken(), 0);
-        }
-    }
-
-    void JSON(){
+    void reDisplay(){
+        //        marker = mMap.addMarker(new MarkerOptions().position(marker.getPosition()).title(marker.getTitle()).icon(BitmapDescriptorFactory.fromResource(R.drawable.homem)).draggable(true));
+//        Geocoder gc = new Geocoder(context);
+//        LatLng ll = marker.getPosition();
+//        List<Address> list = null;
+//        try {
+//            list = gc.getFromLocation(ll.latitude,ll.longitude,1);
+//        } catch (IOException e) {
+//            e.printStackTrace();
+//            return;
+//        }
+//        Address add = list.get(0);
+//        marker.setTitle(add.getLocality());
+//        marker.setSnippet(add.getCountryName());
+//        marker.showInfoWindow();
+//        CircleOptions options = new CircleOptions().center(new LatLng(ll.latitude,ll.longitude)).radius(radius).fillColor(0x330000FF).strokeColor(Color.RED).strokeWidth(3);
+//        shape = mMap.addCircle(options);
+        p("reDisplay.....");
         num_near = 0;
-        if(a==0){
-            init();
-            a=1;
-        }
         plist = new ArrayList<>();
-        JsonObjectRequest getRequest = new JsonObjectRequest(Request.Method.GET, url,
-                new Response.Listener<JSONObject>()
-                {
-                    @Override
-                    public void onResponse(JSONObject response) {
-                        Log.d("Response", response.toString());
-                        Iterator<?> keys = response.keys();
-
-                        while( keys.hasNext() ) {
-                            String key = (String)keys.next();
-                            try {
-                                if ( response.get(key) instanceof JSONObject ) {
-                                    JSONObject js = (JSONObject) response.get(key);
-                                    LatLng tmp = new LatLng(js.getDouble("lat"),js.getDouble("lng"));
-                                    double distance_home = latlandist(tmp,shape.getCenter());
-
-                                    if(distance_home<=shape.getRadius()){
-                                        num_near++;
-                                        p("key: "+key);
-                                        //Marker tmpmarker = mMap.addMarker(new MarkerOptions().position(tmp).title(js.getString("name_provider")).snippet(js.getString("address")).icon(BitmapDescriptorFactory.fromResource(resID)));
-                                        providerdetail ptmp = new providerdetail(key,js.getDouble("lat"),js.getDouble("lng"),js.getString("mycat"),js.getString("name_provider"),js.getString("phone"),js.getString("email"),js.getString("address"),js.getString("website"),js.getString("countrycode"),js.getString("username"));
-                                        plist.add(ptmp);
-                                        if(!hm.containsKey(key)){
-                                            p("does_not_contain");
-                                            hm.put(key,ptmp);
-                                        }
-                                        else{
-                                            p("contains");
-                                        }
-                                    }
-                                }
-                            } catch (JSONException e) {
-                                e.printStackTrace();
-                            }
-                        }
-                        editor.commit();
-                        List<providerdetail> tmpPlist = plist;
-                        List<customArray> groups = geolocgroup1(tmpPlist,currentZoom);
-                        drawgroups(groups);
-                        msgformatching(num_near);
-                    }
-                },
-                new Response.ErrorListener()
-                {
-                    @Override
-                    public void onErrorResponse(VolleyError error) {
-                        Log.d("Error",error.toString());
-                    }
-                }
-        );
-        Volley.newRequestQueue(this).add(getRequest);
+        for(int i=0;i<activep.size();i++){
+            providerdetail ele = activep.get(i);
+            double distance = latlandist(new LatLng(ele.getLat(),ele.getLng()),homemarker.getPosition());
+            if(distance<=shape.getRadius()){
+                num_near++;
+                plist.add(ele);
+            }
+        }
+        p(shape.getRadius()+"");
+        List<List<providerdetail>> groups = geolocgroup1(plist,currentZoom);
+        drawgroups(groups);
+        p(shape.getRadius()+"");
+        msgformatching(num_near);
 
     }
 
     void init(){
+        p("init....");
+        activep = new ArrayList<>();
+        radius = 8046.72;
+        homemarker = mMap.addMarker(new MarkerOptions().position(new LatLng(37.610029, -122.079577)).title("Marker in Sydney").icon(BitmapDescriptorFactory.fromResource(R.drawable.homem)).draggable(true));
+        CircleOptions options = new CircleOptions().center(homemarker.getPosition()).radius(radius).fillColor(0x330000FF).strokeColor(Color.RED).strokeWidth(3);
+        shape = mMap.addCircle(options);
+        mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(homemarker.getPosition(),12.0f));
+
         overallPList = new ArrayList<>();
         JsonObjectRequest getRequest = new JsonObjectRequest(Request.Method.GET, url,
                 new Response.Listener<JSONObject>()
@@ -690,9 +574,10 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                                     LatLng tmp = new LatLng(js.getDouble("lat"),js.getDouble("lng"));
                                         num_near++;
                                         p("key: "+key);
-                                        //Marker tmpmarker = mMap.addMarker(new MarkerOptions().position(tmp).title(js.getString("name_provider")).snippet(js.getString("address")).icon(BitmapDescriptorFactory.fromResource(resID)));
-                                        providerdetail ptmp = new providerdetail(key,js.getDouble("lat"),js.getDouble("lng"),js.getString("mycat"),js.getString("name_provider"),js.getString("phone"),js.getString("email"),js.getString("address"),js.getString("website"),js.getString("countrycode"),js.getString("username"));
+                                        Marker tmpmarker = mMap.addMarker(new MarkerOptions().position(tmp));
+                                        providerdetail ptmp = new providerdetail(key,js.getDouble("lat"),js.getDouble("lng"),js.getString("mycat"),js.getString("name_provider"),js.getString("phone"),js.getString("email"),js.getString("address"),js.getString("website"),js.getString("countrycode"),js.getString("username"),tmpmarker);
                                         overallPList.add(ptmp);
+                                        //hm.put(key,ptmp);
                                         if(!pref.contains(key)){
                                             editor.putBoolean(key, false);
                                         }
@@ -702,6 +587,10 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                             }
                         }
                         editor.commit();
+                        p("overallPloist: "+overallPList.toString());
+                        activep = overallPList;
+                        p("activep: "+activep.toString());
+                        reDisplay();
                     }
                 },
                 new Response.ErrorListener()
@@ -713,6 +602,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                 }
         );
         Volley.newRequestQueue(this).add(getRequest);
+
     }
 
     double marker_density = 0.00600;
@@ -741,9 +631,14 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         return clusters;
     }
 
-    List<customArray> geolocgroup1(List<providerdetail> plist,float zoom){
+    List<List<providerdetail>> geolocgroup1(List<providerdetail> plist,float zoom){
+
+        for(int i=0;i<overallPList.size();i++){
+            overallPList.get(i).getMarker().setVisible(false);
+        }
+
         List<List<providerdetail>> groupslist = cluster_points(plist,zoom);
-        List<customArray> newgroupslist = new ArrayList<>();
+        //List<customArray> newgroupslist = new ArrayList<>();
 
         for(int i=0;i<groupslist.size();i++){
             List<providerdetail> group = groupslist.get(i);
@@ -754,22 +649,29 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                 mid_lat+=group.get(j).getLat();
                 mid_lon+=group.get(j).getLng();
             }
-            if(group.size()>0)
-            newgroupslist.add(new customArray(mid_lat/length,mid_lon/length,group.get(0),group));
+
+            if(group.size()>0){
+                group.get(0).marker.setPosition(new LatLng(mid_lat/length,mid_lon/length));
+                //newgroupslist.add(new customArray(mid_lat/length,mid_lon/length,group.get(0),group));
+            }
         }
-        return newgroupslist;
+        return groupslist;
     }
 
-    void drawgroups(List<customArray> groups){
+    void drawgroups(List<List<providerdetail>> groups){
         hm2 = new HashMap();
         for(int i=0;i<groups.size();i++){
-            customArray group = groups.get(i);
-            LatLng tmp = new LatLng(group.getLat(),group.getLog());
-            p("size: "+group.getListp().size());
-            String markiconame = markericon_name(group.getListp().size());
+            List<providerdetail> group = groups.get(i);
+            Marker mrk = group.get(0).marker;
+            //LatLng tmp = new LatLng(group.getLat(),group.getLog());
+            //p("size: "+group.getListp().size());
+            String markiconame = markericon_name(group.size());
             int resID = getResources().getIdentifier(markiconame , "drawable", getPackageName());
-            hm2.put(tmp,group.getListp());
-            Marker tmpmarker = mMap.addMarker(new MarkerOptions().position(tmp).icon(BitmapDescriptorFactory.fromResource(resID)));
+            mrk.setIcon(BitmapDescriptorFactory.fromResource(resID));
+            mrk.setVisible(true);
+            hm2.put(mrk.getPosition(),group);
+            //hm2.put(tmp,group.getListp());
+            //Marker tmpmarker = mMap.addMarker(new MarkerOptions().position(tmp).icon(BitmapDescriptorFactory.fromResource(resID)));
         }
     }
 
@@ -840,75 +742,6 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
 //        }, groups);
 //    }
 
-
-
-
-
-
-    class customArray{
-        public double getLat() {
-            return lat;
-        }
-
-        public void setLat(double lat) {
-            this.lat = lat;
-        }
-
-        public double getLog() {
-            return log;
-        }
-
-        public void setLog(double log) {
-            this.log = log;
-        }
-
-        public providerdetail getA() {
-            return a;
-        }
-
-        public void setA(providerdetail a) {
-            this.a = a;
-        }
-
-        public List<providerdetail> getListp() {
-            return listp;
-        }
-
-        public void setListp(List<providerdetail> listp) {
-            this.listp = listp;
-        }
-
-        double lat,log;
-        providerdetail a;
-        List<providerdetail> listp;
-        public customArray(double lat,double log,providerdetail a,List<providerdetail> listp){
-            this.lat = lat;
-            this.log = log;
-            this.a = a;
-            this.listp = listp;
-        }
-    }
-
-    void reDisplay(){
-        marker = mMap.addMarker(new MarkerOptions().position(marker.getPosition()).title(marker.getTitle()).icon(BitmapDescriptorFactory.fromResource(R.drawable.homem)).draggable(true));
-        Geocoder gc = new Geocoder(context);
-        LatLng ll = marker.getPosition();
-        List<Address> list = null;
-        try {
-            list = gc.getFromLocation(ll.latitude,ll.longitude,1);
-        } catch (IOException e) {
-            e.printStackTrace();
-            return;
-        }
-        Address add = list.get(0);
-        marker.setTitle(add.getLocality());
-        marker.setSnippet(add.getCountryName());
-        marker.showInfoWindow();
-        CircleOptions options = new CircleOptions().center(new LatLng(ll.latitude,ll.longitude)).radius(radius).fillColor(0x330000FF).strokeColor(Color.RED).strokeWidth(3);
-        shape = mMap.addCircle(options);
-        JSON();
-    }
-
     void p(String print){
         System.out.println(print);
     }
@@ -956,6 +789,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     }
 
     void msgformatching(int num_near){
+        p(shape.getRadius()+"");
         double intrad = Math.round(0.621371*shape.getRadius()/1000);
         if(num_near>0)
             t(num_near+" Locations matching in "+intrad+" Miles");
@@ -966,6 +800,16 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     public class providerdetail{
         String mycat,name_provider,phone,email,address,website,countrycode,username,id;
         double lat,lng;
+
+        public Marker getMarker() {
+            return marker;
+        }
+
+        public void setMarker(Marker marker) {
+            this.marker = marker;
+        }
+
+        Marker marker;
 
         public boolean isLiked() {
             return liked;
@@ -985,7 +829,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
             this.id = id;
         }
 
-        public providerdetail(String id, double lat, double lng, String mycat, String name_provider, String phone, String email, String address, String website, String countrycode, String username){
+        public providerdetail(String id, double lat, double lng, String mycat, String name_provider, String phone, String email, String address, String website, String countrycode, String username,Marker marker){
             this.id = id;
 
             this.lat = lat;
@@ -998,6 +842,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
             this.website = website;
             this.countrycode = countrycode;
             this.username = username;
+            this.marker = marker;
             liked = false;
         }
 
