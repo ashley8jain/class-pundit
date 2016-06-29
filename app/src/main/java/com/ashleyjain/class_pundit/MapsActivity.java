@@ -26,7 +26,6 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageButton;
-import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -83,9 +82,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     LikeButton favourite_button;
     Context context;
     Circle shape;
-    Marker marker;
     double radius;
-    ListView lv;
     int PLACE_AUTOCOMPLETE_REQUEST_CODE = 1;
     int num_near = 0;
     HashMap hm = new HashMap();
@@ -98,12 +95,13 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     final int[] i = {0};
     DialogPlus dialogPlus;
     Marker homemarker;
+    int a = 0;
 
     public static Drawer drawer = null;
     DrawerBuilder builder=null;
 
     //final String url = "http://192.168.8.100/cpnew/allp.json";
-    final String url = "http://192.168.0.102/JSONallp.txt";
+    final String url = "http://192.168.1.101/JSONallp.txt";
 
 
     @Override
@@ -156,8 +154,14 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                                             try {
                                                 JSONObject jsonResponse = new JSONObject(response);
                                                 JSONObject dataobject = jsonResponse.getJSONObject("data");
-                                                JSONArray activep = dataobject.getJSONArray("activep");
-                                                t(activep.toString());
+                                                JSONArray activep_id = dataobject.getJSONArray("activep");
+                                                p(activep_id.toString());
+                                                activep = new ArrayList<>();
+                                                for(int i=0;i<activep_id.length();i++){
+                                                    String id = activep_id.getString(i);
+                                                    activep.add((providerdetail) hm.get(id));
+                                                }
+                                                reDisplay();
                                                 dialog2.dismiss();
                                             } catch (JSONException e) {
                                                 e.printStackTrace();
@@ -283,6 +287,10 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                         }
                         set_provider_details();
                         dialogPlus.show();
+                        activep = new ArrayList<>();
+                        activep = favouriteList;
+                        homemarker.setPosition(activep.get(0).marker.getPosition());
+                        reDisplay();
                     }
                     else{
                         t("Empty!! No favourite");
@@ -358,7 +366,16 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
             public void onCameraChange(CameraPosition position) {
                 if (position.zoom != currentZoom){
                     currentZoom = position.zoom;
-                    reDisplay();
+                    if(a==0){
+                        reDisplay();
+                        a=1;
+                    }
+                    else {
+                        List<providerdetail> tmpPList = new ArrayList<>();
+                        tmpPList.addAll(plist);
+                        List<List<providerdetail>> groups = geolocgroup1(tmpPList, currentZoom);
+                        drawgroups(groups);
+                    }
                 }
             }
         });
@@ -532,20 +549,19 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         p("reDisplay.....");
         num_near = 0;
         plist = new ArrayList<>();
-        for(int i=0;i<activep.size();i++){
-            providerdetail ele = activep.get(i);
+        p("activeppp: "+activep.size());
+        for(providerdetail ele:activep){
             double distance = latlandist(new LatLng(ele.getLat(),ele.getLng()),homemarker.getPosition());
             if(distance<=shape.getRadius()){
                 num_near++;
                 plist.add(ele);
             }
         }
-        p(shape.getRadius()+"");
-        List<List<providerdetail>> groups = geolocgroup1(plist,currentZoom);
+        List<providerdetail> tmpPList = new ArrayList<>();
+        tmpPList.addAll(plist);
+        List<List<providerdetail>> groups = geolocgroup1(tmpPList,currentZoom);
         drawgroups(groups);
-        p(shape.getRadius()+"");
         msgformatching(num_near);
-
     }
 
     void init(){
@@ -568,28 +584,25 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
 
                         while( keys.hasNext() ) {
                             String key = (String)keys.next();
-                            try {
-                                if ( response.get(key) instanceof JSONObject ) {
-                                    JSONObject js = (JSONObject) response.get(key);
-                                    LatLng tmp = new LatLng(js.getDouble("lat"),js.getDouble("lng"));
-                                        num_near++;
+                                try {
+                                    if ( response.get(key) instanceof JSONObject ) {
+                                        JSONObject js = (JSONObject) response.get(key);
+                                        LatLng tmp = new LatLng(js.getDouble("lat"),js.getDouble("lng"));
                                         p("key: "+key);
                                         Marker tmpmarker = mMap.addMarker(new MarkerOptions().position(tmp));
                                         providerdetail ptmp = new providerdetail(key,js.getDouble("lat"),js.getDouble("lng"),js.getString("mycat"),js.getString("name_provider"),js.getString("phone"),js.getString("email"),js.getString("address"),js.getString("website"),js.getString("countrycode"),js.getString("username"),tmpmarker);
                                         overallPList.add(ptmp);
-                                        //hm.put(key,ptmp);
+                                        hm.put(key,ptmp);
                                         if(!pref.contains(key)){
                                             editor.putBoolean(key, false);
                                         }
+                                    }
+                                } catch (JSONException e) {
+                                    e.printStackTrace();
                                 }
-                            } catch (JSONException e) {
-                                e.printStackTrace();
-                            }
                         }
                         editor.commit();
-                        p("overallPloist: "+overallPList.toString());
                         activep = overallPList;
-                        p("activep: "+activep.toString());
                         reDisplay();
                     }
                 },
@@ -606,72 +619,56 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     }
 
     double marker_density = 0.00600;
-    long scale = 1183315100;
+    long scale = 1013315100;
 
-    List<List<providerdetail>> cluster_points(List prolist,float zoom){
+    List<List<providerdetail>> cluster_points(List<providerdetail> prolist,float zoom){
         List<List<providerdetail>> clusters = new ArrayList<>();
-        int size = 0;
         while(prolist.size()>0){
             List<providerdetail> cluster = new ArrayList<>();
-            for(int i=0;i<prolist.size();i++){
-                LatLng l1=new LatLng(((providerdetail)prolist.get(0)).getLat(),((providerdetail)prolist.get(0)).getLng());
-                LatLng l2 = new LatLng(((providerdetail)prolist.get(i)).getLat(),((providerdetail)prolist.get(i)).getLng());
+            LatLng l1=new LatLng(prolist.get(0).getLat(),prolist.get(0).getLng());
+            for(providerdetail item:prolist){
+                LatLng l2 = new LatLng(item.getLat(),item.getLng());
                 double distance = latlandist(l1,l2);
-                p(distance*Math.pow(2,zoom)+"<="+ marker_density * scale);
+                //p("checkingg: "+distance*Math.pow(2,zoom)+"<="+ marker_density * scale);
                 if(distance*Math.pow(2,zoom) <= marker_density * scale){
-                    cluster.add((providerdetail) prolist.get(i));
-                    prolist.remove(i);
+                    cluster.add(item);
                 }
             }
-            p("cluster size: "+cluster.size());
+            prolist.removeAll(cluster);
             clusters.add(cluster);
-            size+=cluster.size();
         }
-        p("totalsize: "+size);
         return clusters;
     }
 
     List<List<providerdetail>> geolocgroup1(List<providerdetail> plist,float zoom){
 
-        for(int i=0;i<overallPList.size();i++){
-            overallPList.get(i).getMarker().setVisible(false);
+        for(providerdetail item:overallPList){
+            item.marker.setVisible(false);
         }
 
         List<List<providerdetail>> groupslist = cluster_points(plist,zoom);
-        //List<customArray> newgroupslist = new ArrayList<>();
-
-        for(int i=0;i<groupslist.size();i++){
-            List<providerdetail> group = groupslist.get(i);
+        for(List<providerdetail> group:groupslist){
             int length = group.size();
             double mid_lat = 0;
             double mid_lon = 0;
-            for(int j=0;j<length;j++){
-                mid_lat+=group.get(j).getLat();
-                mid_lon+=group.get(j).getLng();
+            for(providerdetail item:group){
+                mid_lat+=item.getLat();
+                mid_lon+=item.getLng();
             }
-
-            if(group.size()>0){
-                group.get(0).marker.setPosition(new LatLng(mid_lat/length,mid_lon/length));
-                //newgroupslist.add(new customArray(mid_lat/length,mid_lon/length,group.get(0),group));
-            }
+            group.get(0).marker.setPosition(new LatLng(mid_lat/length,mid_lon/length));
         }
         return groupslist;
     }
 
     void drawgroups(List<List<providerdetail>> groups){
         hm2 = new HashMap();
-        for(int i=0;i<groups.size();i++){
-            List<providerdetail> group = groups.get(i);
+        for(List<providerdetail> group:groups){
             Marker mrk = group.get(0).marker;
-            //LatLng tmp = new LatLng(group.getLat(),group.getLog());
-            //p("size: "+group.getListp().size());
             String markiconame = markericon_name(group.size());
             int resID = getResources().getIdentifier(markiconame , "drawable", getPackageName());
             mrk.setIcon(BitmapDescriptorFactory.fromResource(resID));
             mrk.setVisible(true);
             hm2.put(mrk.getPosition(),group);
-            //hm2.put(tmp,group.getListp());
-            //Marker tmpmarker = mMap.addMarker(new MarkerOptions().position(tmp).icon(BitmapDescriptorFactory.fromResource(resID)));
         }
     }
 
