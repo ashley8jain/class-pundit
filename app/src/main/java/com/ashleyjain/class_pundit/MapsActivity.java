@@ -54,7 +54,6 @@ import com.google.android.gms.maps.model.CircleOptions;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
-import com.like.LikeButton;
 import com.mikepenz.materialdrawer.Drawer;
 import com.mikepenz.materialdrawer.DrawerBuilder;
 import com.mikepenz.materialdrawer.model.PrimaryDrawerItem;
@@ -79,7 +78,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     private GoogleApiClient mGoogleApiClient;
     TextView title,address,classes,phone2,mail,outof;
     ImageButton left,right;
-    LikeButton favourite_button;
+    ImageButton favourite_button;
     Context context;
     Circle shape;
     double radius;
@@ -230,17 +229,17 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         //drawer
         builder = new DrawerBuilder()
                 .withActivity(this)
-                .withDrawerWidthDp(200)
+                .withDrawerWidthDp(200).withSliderBackgroundColor(getResources().getColor(R.color.primary))
                 .withTranslucentNavigationBar(false)
                 .withTranslucentStatusBar(false)
                 .withDisplayBelowStatusBar(true)
                 .withActionBarDrawerToggle(true);
 
         drawer = builder.build();
-        builder.addDrawerItems(new PrimaryDrawerItem().withName("Favourite"))
-                .addDrawerItems(new PrimaryDrawerItem().withName("Contact us"))
-                .addDrawerItems(new PrimaryDrawerItem().withName("About us"))
-                .addDrawerItems(new PrimaryDrawerItem().withName("How It Works"))
+        builder.addDrawerItems(new PrimaryDrawerItem().withName("Favourite").withTextColor(getResources().getColor(R.color.white)))
+                .addDrawerItems(new PrimaryDrawerItem().withName("Contact us").withTextColor(getResources().getColor(R.color.white)))
+                .addDrawerItems(new PrimaryDrawerItem().withName("About us").withTextColor(getResources().getColor(R.color.white)))
+                .addDrawerItems(new PrimaryDrawerItem().withName("How It Works").withTextColor(getResources().getColor(R.color.white)))
         .withOnDrawerItemClickListener(new Drawer.OnDrawerItemClickListener() {
             @Override
             public boolean onItemClick(View view, int position, IDrawerItem drawerItem) {
@@ -290,6 +289,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                         activep = new ArrayList<>();
                         activep = favouriteList;
                         homemarker.setPosition(activep.get(0).marker.getPosition());
+                        shape.setCenter(activep.get(0).marker.getPosition());
                         reDisplay();
                     }
                     else{
@@ -367,7 +367,6 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                 if (position.zoom != currentZoom){
                     currentZoom = position.zoom;
                     if(a==0){
-                        reDisplay();
                         a=1;
                     }
                     else {
@@ -393,7 +392,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         left = (ImageButton) view.findViewById(R.id.left_arrow);
         right = (ImageButton) view.findViewById(R.id.right_arrow);
         outof = (TextView) view.findViewById(R.id.outoftotal);
-        favourite_button = (LikeButton) view.findViewById(R.id.favourite_button);
+        favourite_button = (ImageButton) view.findViewById(R.id.favourite_button);
 
         mMap.setOnMarkerClickListener(new GoogleMap.OnMarkerClickListener() {
             @Override
@@ -414,7 +413,6 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                     }
                     set_provider_details();
 
-                    //favourite_button.setLiked(((providerdetail)hm.get(pd[0].get(i[0]).getId())).isLiked());
                         dialogPlus.show();
                 }
                 else{
@@ -429,6 +427,39 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
             public void onClick(View v) {
                 Intent browserIntent = new Intent(Intent.ACTION_VIEW, Uri.parse(pd[0].get(i[0]).getWebsite()));
                 startActivity(browserIntent);
+            }
+        });
+
+//        favourite_button.setOnLikeListener(new OnLikeListener() {
+//            @Override
+//            public void liked(LikeButton likeButton) {
+//                editor.remove(pd[0].get(i[0]).getId());
+//                editor.putBoolean(pd[0].get(i[0]).getId(),true);
+//                editor.commit();
+//            }
+//            @Override
+//            public void unLiked(LikeButton likeButton) {
+//                editor.remove(pd[0].get(i[0]).getId());
+//                editor.putBoolean(pd[0].get(i[0]).getId(),false);
+//                editor.commit();
+//            }
+//        });
+        favourite_button.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                boolean isliked=pref.getBoolean(pd[0].get(i[0]).getId(),false);
+                if(isliked){
+                    favourite_button.setImageResource(R.drawable.hearts);
+                    editor.remove(pd[0].get(i[0]).getId());
+                    editor.putBoolean(pd[0].get(i[0]).getId(),false);
+                    editor.commit();
+                }
+                else{
+                    favourite_button.setImageResource(R.drawable.hearts_red);
+                    editor.remove(pd[0].get(i[0]).getId());
+                    editor.putBoolean(pd[0].get(i[0]).getId(),true);
+                    editor.commit();
+                }
             }
         });
 
@@ -449,24 +480,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                 if(i[0]== pd[0].size()){
                     i[0]=0;
                 }
-
                 set_provider_details();
-
-//                favourite_button.setOnLikeListener(new OnLikeListener() {
-//                    @Override
-//                    public void liked(LikeButton likeButton) {
-//                        editor.remove(pd[0].get(i[0]).getId());
-//                        editor.putBoolean(pd[0].get(i[0]).getId(),true);
-//                        editor.commit();
-//                    }
-//                    @Override
-//                    public void unLiked(LikeButton likeButton) {
-//                        editor.remove(pd[0].get(i[0]).getId());
-//                        editor.putBoolean(pd[0].get(i[0]).getId(),false);
-//                        editor.commit();
-//                    }
-//                });
-
             }
         });
 
@@ -504,7 +518,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
             mail.setText(" "+ pd[0].get(i[0]).getEmail());
         }
         outof.setText((i[0]+1)+" of "+pd[0].size());
-        favourite_button.setLiked(pref.getBoolean(pd[0].get(i[0]).getId(),false));
+        favourite_button.setImageResource(pref.getBoolean(pd[0].get(i[0]).getId(),false)?R.drawable.hearts_red:R.drawable.hearts);
     }
 
     @Override
@@ -581,14 +595,12 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                     public void onResponse(JSONObject response) {
                         Log.d("Response", response.toString());
                         Iterator<?> keys = response.keys();
-
                         while( keys.hasNext() ) {
                             String key = (String)keys.next();
                                 try {
                                     if ( response.get(key) instanceof JSONObject ) {
                                         JSONObject js = (JSONObject) response.get(key);
                                         LatLng tmp = new LatLng(js.getDouble("lat"),js.getDouble("lng"));
-                                        p("key: "+key);
                                         Marker tmpmarker = mMap.addMarker(new MarkerOptions().position(tmp));
                                         providerdetail ptmp = new providerdetail(key,js.getDouble("lat"),js.getDouble("lng"),js.getString("mycat"),js.getString("name_provider"),js.getString("phone"),js.getString("email"),js.getString("address"),js.getString("website"),js.getString("countrycode"),js.getString("username"),tmpmarker);
                                         overallPList.add(ptmp);
