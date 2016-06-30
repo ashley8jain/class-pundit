@@ -68,9 +68,11 @@ import org.json.JSONObject;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 public class MapsActivity extends AppCompatActivity implements OnMapReadyCallback,GoogleApiClient.OnConnectionFailedListener {
 
@@ -84,7 +86,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     double radius;
     int PLACE_AUTOCOMPLETE_REQUEST_CODE = 1;
     int num_near = 0;
-    HashMap hm = new HashMap();
+    public static HashMap hm = new HashMap();
     HashMap hm2;
     private float currentZoom = -1;
     public static SharedPreferences.Editor editor;
@@ -97,6 +99,9 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     int a = 0;
     public static JSONObject kids,adults,pets;
     public static HashMap cat_hm,subcat_hm;
+    public static Set<String> filter;
+    private static MapsActivity _instance;
+    public static filterdialog overlay;
 
     public static Drawer drawer = null;
     DrawerBuilder builder=null;
@@ -104,6 +109,10 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     //final String url = "http://192.168.8.100/cpnew/allp.json";
     final String url = "http://192.168.1.101/JSONallp.txt";
 
+
+    public static MapsActivity get() {
+        return _instance;
+    }
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
@@ -198,7 +207,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
 
             case R.id.filter:
                 FragmentManager fm = getSupportFragmentManager();
-                filterdialog overlay = new filterdialog();
+                overlay = new filterdialog();
                 overlay.show(fm, "FragmentDialog");
                 return  true;
 
@@ -213,8 +222,10 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_maps);
 
+        _instance = this;
         pref = getApplicationContext().getSharedPreferences("FavouriteList", 0); // 0 - for private mode
         editor = pref.edit();
+        filter = new HashSet<>();
 
         Toolbar toolbar = (Toolbar) findViewById(R.id.my_toolbar);
 
@@ -741,6 +752,15 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
             mrk.setVisible(true);
             hm2.put(mrk.getPosition(),group);
         }
+    }
+
+    public void filtered(){
+        activep = new ArrayList<>();
+        for (String s : filter) {
+            activep.add((providerdetail) hm.get(s));
+        }
+        //activep = filterPList;
+        reDisplay();
     }
 
     //    function cluster_points(plist, f) { //f (p0, p1) -> is p0 friend of p1

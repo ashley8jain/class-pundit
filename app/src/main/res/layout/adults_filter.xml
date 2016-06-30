@@ -22,6 +22,7 @@
         android:orientation="horizontal"
         android:layout_height="wrap_content">
         <Button
+            android:id="@+id/filtersearch"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:textColor="@color/white"
@@ -30,6 +31,7 @@
             android:background="@color/colorPrimary"
             android:text="search"/>
         <Button
+            android:id="@+id/filtercancel"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:textColor="@color/white"
