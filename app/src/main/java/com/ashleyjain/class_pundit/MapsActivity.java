@@ -95,6 +95,8 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     DialogPlus dialogPlus;
     Marker homemarker;
     int a = 0;
+    public static JSONObject kids,adults,pets;
+    public static HashMap cat_hm,subcat_hm;
 
     public static Drawer drawer = null;
     DrawerBuilder builder=null;
@@ -565,6 +567,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         plist = new ArrayList<>();
         p("activeppp: "+activep.size());
         for(providerdetail ele:activep){
+            
             double distance = latlandist(new LatLng(ele.getLat(),ele.getLng()),homemarker.getPosition());
             if(distance<=shape.getRadius()){
                 num_near++;
@@ -627,6 +630,62 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                 }
         );
         Volley.newRequestQueue(this).add(getRequest);
+
+
+        cat_hm = new HashMap();
+        subcat_hm = new HashMap();
+        String url2 = "http://192.168.1.101/catgs.txt";
+        JsonObjectRequest getRequest2 = new JsonObjectRequest(Request.Method.GET, url2,
+                new Response.Listener<JSONObject>()
+                {
+                    @Override
+                    public void onResponse(JSONObject response) {
+                        Log.d("Response", response.toString());
+                        try{
+                            JSONObject data = response.getJSONObject("data");
+                            JSONObject dictl = data.getJSONObject("dictl");
+
+                            JSONObject cat = dictl.getJSONObject("cat");
+                            Iterator<?> keys = cat.keys();
+                            while( keys.hasNext() ) {
+                                String key = (String)keys.next();
+                                    if ( cat.get(key) instanceof JSONObject ) {
+                                        JSONObject js = (JSONObject) cat.get(key);
+                                        cat_hm.put(key,js.getString("cat"));
+                                    }
+                            }
+
+                            JSONObject subcat = dictl.getJSONObject("subcat");
+                            Iterator<?> keys2 = subcat.keys();
+                            while( keys2.hasNext() ) {
+                                String key = (String)keys2.next();
+                                if ( subcat.get(key) instanceof JSONObject ) {
+                                    JSONObject js = (JSONObject) subcat.get(key);
+                                    subcat_hm.put(key,js.getString("subcat"));
+                                }
+                            }
+
+                            JSONObject catgtree = data.getJSONObject("catgtree");
+                            kids = catgtree.getJSONObject("1");
+                            adults = catgtree.getJSONObject("2");
+                            pets = catgtree.getJSONObject("3");
+
+
+                        } catch (JSONException e) {
+                            e.printStackTrace();
+                        }
+                    }
+                },
+                new Response.ErrorListener()
+                {
+                    @Override
+                    public void onErrorResponse(VolleyError error) {
+                        Log.d("Error",error.toString());
+                    }
+                }
+        );
+        Volley.newRequestQueue(this).add(getRequest2);
+
 
     }
 
@@ -751,7 +810,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
 //        }, groups);
 //    }
 
-    void p(String print){
+    public static void p(String print){
         System.out.println(print);
     }
     void t(String toast){
