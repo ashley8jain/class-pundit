@@ -10,3 +10,8 @@ You can use ClassPundit to:
 ☞ Chat with your friends to learn more about a particular class
 
 Explore a world of fun. Inspire your kids to break out of their limited routine of homework and video games
+
+## Development
+
+Built using Google Map API, clustering of places marker, Polygon on Map and JSON Parser with volley API
+                             
